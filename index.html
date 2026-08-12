@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else                    { fn='saveKebersihan'; args=[p.type,p]; }
     gasCall(fn,args,
       function(){ btn.disabled=false; btn.textContent='Simpan'; closeM(); toast('Data berhasil disimpan!',true);
-        if(p.type==='tabuk') rstTabuk(); else if(p.type==='keu') rstKeu(); else if(p.type==='ojol') rstOjol(); else rstCL(p.type); },
+        if(p.type==='tabuk') rstTabuk(); else if(p.type==='keu') rstKeu(); else if(p.type==='ojol') rstOjol(); else { if(p.type==='badar') rstBadar(); else rstKhandaq(); } },
       function(m){ btn.disabled=false; btn.textContent='Simpan'; toast('Gagal: '+m,false); }
     );
   });
@@ -412,8 +412,8 @@ function chartBar(cvId, chKey, items){
 // ================================================================
 function pgBadarSub(el){
   var pagiHtml='', soreHtml='';
-  for(var i=0;i<BADAR_PAGI_IT.length;i++) pagiHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_PAGI_IT[i]+'"><div class="cbox">v</div><span>'+BADAR_PAGI_IT[i]+'</span></div>';
-  for(var i=0;i<BADAR_SORE_IT.length;i++) soreHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_SORE_IT[i]+'"><div class="cbox">v</div><span>'+BADAR_SORE_IT[i]+'</span></div>';
+  for(var i=0;i<BADAR_PAGI_IT.length;i++) pagiHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_PAGI_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+BADAR_PAGI_IT[i]+'</span></div>';
+  for(var i=0;i<BADAR_SORE_IT.length;i++) soreHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_SORE_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+BADAR_SORE_IT[i]+'</span></div>';
   el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Misno</h2><p>Checklist harian aktivitas kebersihan masjid</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Harian</div><div class="cbody">'+
     '<div class="fg2" style="grid-template-columns:1fr auto">'+
@@ -458,11 +458,16 @@ function draftBadar(){
   var sore=LIBUR_BADAR?[]:gChk('b_sore');
   var sa=document.getElementById('b_sabahad');
   var saVal=sa?sa.value.trim():'';
+  var pagiMissing=[],soreMissing=[];
+  for(var mi=0;mi<BADAR_PAGI_IT.length;mi++){ if(pagi.indexOf(BADAR_PAGI_IT[mi])<0) pagiMissing.push((mi+1)+'. '+BADAR_PAGI_IT[mi]); }
+  for(var mi=0;mi<BADAR_SORE_IT.length;mi++){ if(sore.indexOf(BADAR_SORE_IT[mi])<0) soreMissing.push((mi+1)+'. '+BADAR_SORE_IT[mi]); }
+  var pagiLabel = status==='LIBUR'?'LIBUR':pagi.length===BADAR_PAGI_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum: '+pagiMissing.join(', ')+'</span>';
+  var soreLabel = status==='LIBUR'?'LIBUR':sore.length===BADAR_SORE_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum: '+soreMissing.join(', ')+'</span>';
   document.getElementById('draftT').innerHTML=
     '<tr><td>Tanggal</td><td>'+fL(tgl)+'</td></tr>'+
     '<tr><td>Status</td><td><span class="badge '+(status==='LIBUR'?'blibur':'bg')+'">'+status+'</span></td></tr>'+
-    '<tr><td>Sesi Pagi ('+pagi.length+'/'+BADAR_PAGI_IT.length+')</td><td style="font-size:12px">'+(pagi.length?pagi.join(', '):'Tidak ada')+'</td></tr>'+
-    '<tr><td>Sesi Sore ('+sore.length+'/'+BADAR_SORE_IT.length+')</td><td style="font-size:12px">'+(sore.length?sore.join(', '):'Tidak ada')+'</td></tr>'+
+    '<tr><td>Sesi Pagi ('+pagi.length+'/'+BADAR_PAGI_IT.length+')</td><td>'+pagiLabel+'</td></tr>'+
+    '<tr><td>Sesi Sore ('+sore.length+'/'+BADAR_SORE_IT.length+')</td><td>'+soreLabel+'</td></tr>'+
     (saVal?'<tr><td>Tambahan Sab/Ahad</td><td>'+saVal+'</td></tr>':'');
   PEND={type:'badar',tanggal:tgl,status:status,sesi_pagi:pagi,sesi_sore:sore,catatan_sabtu_ahad:saVal}; openM();
 }
@@ -502,10 +507,14 @@ function loadBadar(){
     var rows='';
     for(var i=0;i<data.length;i++){
       var d=data[i], pl=d.sesi_pagi?d.sesi_pagi.length:0, sl=d.sesi_sore?d.sesi_sore.length:0;
+      var pM2=[],sM2=[];
+      if(d.status!=='LIBUR'){ for(var m=0;m<BADAR_PAGI_IT.length;m++){ if(!d.sesi_pagi||d.sesi_pagi.indexOf(BADAR_PAGI_IT[m])<0)pM2.push(m+1); } }
+      if(d.status!=='LIBUR'){ for(var m=0;m<BADAR_SORE_IT.length;m++){ if(!d.sesi_sore||d.sesi_sore.indexOf(BADAR_SORE_IT[m])<0)sM2.push(m+1); } }
+      var pT2=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':pl===BADAR_PAGI_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum No: '+pM2.join(', ')+'</span>';
+      var sT2=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':sl===BADAR_SORE_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum No: '+sM2.join(', ')+'</span>';
       rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td>'+
-        '<td><span class="badge '+(pl===BADAR_PAGI_IT.length?'bg':pl>0?'bo':'bw')+'">'+pl+'/'+BADAR_PAGI_IT.length+'</span></td>'+
-        '<td><span class="badge '+(sl===BADAR_SORE_IT.length?'bg':sl>0?'bo':'bw')+'">'+sl+'/'+BADAR_SORE_IT.length+'</span></td>'+
+        '<td>'+pT2+'</td>'+'<td>'+sT2+'</td>'+
         '<td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
     }
     b.innerHTML=rows;
@@ -516,7 +525,7 @@ function loadBadar(){
 //  KHANDAQ (Wahyudin)
 // ================================================================
 function pgKhandaqSub(el){
-  var ciHtml=''; for(var i=0;i<KHANDAQ_IT.length;i++) ciHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+KHANDAQ_IT[i]+'"><div class="cbox">v</div><span>'+KHANDAQ_IT[i]+'</span></div>';
+  var ciHtml=''; for(var i=0;i<KHANDAQ_IT.length;i++) ciHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+KHANDAQ_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+KHANDAQ_IT[i]+'</span></div>';
   el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Wahyudin</h2><p>Checklist harian aktivitas kebersihan lantai 2</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Harian</div><div class="cbody">'+
     '<div class="fg2" style="grid-template-columns:1fr auto">'+
@@ -550,10 +559,13 @@ function draftKhandaq(){
   var status=LIBUR_KHANDAQ?'LIBUR':'HADIR';
   var cl=LIBUR_KHANDAQ?[]:gChk('k_cl');
   var sa=document.getElementById('k_sabahad'); var saVal=sa?sa.value.trim():'';
+  var kdMissing=[];
+  for(var mi=0;mi<KHANDAQ_IT.length;mi++){ if(cl.indexOf(KHANDAQ_IT[mi])<0) kdMissing.push((mi+1)+'. '+KHANDAQ_IT[mi]); }
+  var kdLabel = status==='LIBUR'?'LIBUR':cl.length===KHANDAQ_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum: '+kdMissing.join(', ')+'</span>';
   document.getElementById('draftT').innerHTML=
     '<tr><td>Tanggal</td><td>'+fL(tgl)+'</td></tr>'+
     '<tr><td>Status</td><td><span class="badge '+(status==='LIBUR'?'blibur':'bg')+'">'+status+'</span></td></tr>'+
-    '<tr><td>Checklist ('+cl.length+'/'+KHANDAQ_IT.length+')</td><td style="font-size:12px">'+(cl.length?cl.join(', '):'Tidak ada')+'</td></tr>'+
+    '<tr><td>Checklist ('+cl.length+'/'+KHANDAQ_IT.length+')</td><td>'+kdLabel+'</td></tr>'+
     (saVal?'<tr><td>Tambahan Sab/Ahad</td><td>'+saVal+'</td></tr>':'');
   PEND={type:'khandaq',tanggal:tgl,status:status,checklist:cl,catatan_sabtu_ahad:saVal}; openM();
 }
@@ -586,8 +598,7 @@ function loadKhandaq(){
       var d=data[i], cl=d.checklist?d.checklist.length:0;
       rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td>'+
-        '<td><span class="badge '+(cl===KHANDAQ_IT.length?'bg':cl>0?'bo':'bw')+'">'+cl+'/'+KHANDAQ_IT.length+'</span>'+
-        (cl?'<br><small style="color:#aaa;font-size:11px">'+d.checklist.join(', ')+'</small>':'')+'</td>'+
+        '<td>'+(d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':cl===KHANDAQ_IT.length?'<span class="badge bg">LENGKAP</span>':function(){ var mK=[]; for(var m=0;m<KHANDAQ_IT.length;m++){ if(!d.checklist||d.checklist.indexOf(KHANDAQ_IT[m])<0)mK.push(m+1); } return '<span style="color:#c0392b;font-size:12px">Belum No: '+mK.join(', ')+'</span>'; }())+'</td>'+
         '<td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
     }
     b.innerHTML=rows;
@@ -850,7 +861,11 @@ function pgAdminKhandaq(el){
   el.innerHTML='<div class="ph"><h2>Data Wahyudin - Kebersihan Lantai 2</h2><p>Seluruh laporan harian</p></div>'+
     '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Checklist</th><th>Catatan</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aKd"><tr><td colspan="6">'+SK(2)+'</td></tr></tbody></table></div></div>';
-  gasCall('getKebersihan',['khandaq',{}],function(res){ var data=res.data||[], b=document.getElementById('aKd'); if(!data.length){ b.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i], cl=d.checklist?d.checklist.length:0; rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td><span class="badge '+(cl===KHANDAQ_IT.length?'bg':cl>0?'bo':'bw')+'">'+cl+'/'+KHANDAQ_IT.length+'</span>'+(cl?'<br><small style="color:#aaa;font-size:11px">'+d.checklist.join(', ')+'</small>':'')+'</td><td style="color:#aaa;font-size:12px">'+(d.catatan_sabtu_ahad||'-')+'</td><td><button class="btnhps" onclick="hapusData(\'khandaq_data\',\''+d.id+'\',pgAdminKhandaq)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
+  gasCall('getKebersihan',['khandaq',{}],function(res){ var data=res.data||[], b=document.getElementById('aKd'); if(!data.length){ b.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i], cl=d.checklist?d.checklist.length:0;
+      var cM=[];
+      if(d.status!=='LIBUR'){ for(var m=0;m<KHANDAQ_IT.length;m++){ if(!d.checklist||d.checklist.indexOf(KHANDAQ_IT[m])<0)cM.push(m+1); } }
+      var cTx=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':cl===KHANDAQ_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum No: '+cM.join(', ')+'</span>';
+      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td>'+cTx+'</td><td style="color:#aaa;font-size:12px">'+(d.catatan_sabtu_ahad||'-')+'</td><td><button class="btnhps" onclick="hapusData(\'khandaq_data\',\''+d.id+'\',pgAdminKhandaq)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminOjol(el){
   el.innerHTML='<div class="ph"><h2>Data Ojol - Distribusi Bantuan</h2><p>Seluruh data distribusi</p></div>'+
