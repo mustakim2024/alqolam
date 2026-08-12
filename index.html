@@ -189,23 +189,21 @@ var REKENING      = ["BSI 1001009119 - Al Qolam", "BSI 1001009113 - Jumat Berkah
 var KAT_IN  = ["Infaq Jumat","Donasi","Kas Bulanan","Bantuan Lembaga","Lainnya"];
 var KAT_OUT = ["Konsumsi Jumat","Kebersihan dan Peralatan","Listrik dan Air","Operasional","Lainnya"];
 
-// ---- API CALL via fetch() ----
+// ---- API CALL via fetch GET ----
 var GAS_API = "https://script.google.com/macros/s/AKfycbycoUdZKRx81uYV8Jn2hKuGXBPzRu2Ty10Id8QPHCyQiliB5O2qs2_Bv4VZ9YIlTsiz/exec";
 
 function gasCall(fn, args, onOk, onErr) {
-  fetch(GAS_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fn: fn, args: args || [] })
-  })
-  .then(function(resp) { return resp.json(); })
-  .then(function(r) {
-    if (r && r.ok === false) { if (onErr) onErr(r.msg || 'Error'); }
-    else { if (onOk) onOk(r); }
-  })
-  .catch(function(e) {
-    if (onErr) onErr('Fetch error: ' + String(e));
-  });
+  var payload = encodeURIComponent(JSON.stringify({ fn: fn, args: args || [] }));
+  var url = GAS_API + '?payload=' + payload;
+  fetch(url, { method: 'GET', redirect: 'follow' })
+    .then(function(resp) { return resp.json(); })
+    .then(function(r) {
+      if (r && r.ok === false) { if (onErr) onErr(r.msg || 'Error'); }
+      else { if (onOk) onOk(r); }
+    })
+    .catch(function(e) {
+      if (onErr) onErr('Fetch error: ' + String(e));
+    });
 }
 
 // ---- OFFLINE ----
