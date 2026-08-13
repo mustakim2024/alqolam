@@ -116,9 +116,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 .toast.on{display:block}.tok{background:#0a5c2e}.terr{background:#c0392b}
 .btnhps{padding:4px 10px;background:#c0392b;color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer}
 .btnhps:hover{background:#a93226}
-.ph{position:relative}
-.btnrefresh{position:absolute;top:0;right:0;padding:6px 14px;background:#f4f4f0;border:1.5px solid #0a5c2e;color:#0a5c2e;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
-.btnrefresh:hover{background:#0a5c2e;color:#fff}
+
 .rek-box{background:#f0f7ff;border:1px solid #90cdf4;border-radius:7px;padding:10px 13px;font-size:12px;color:#1a4a8a;margin-top:6px;line-height:1.6}
 @media(max-width:600px){.fg2,.clgrid{grid-template-columns:1fr}.appmain{padding:14px}.smg{grid-template-columns:1fr}.lbox{padding:32px 20px}}
 </style>
@@ -151,6 +149,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
     </div>
     <div class="hright">
       <div class="huser"><div class="ava" id="avEl">A</div><span id="nmEl">User</span></div>
+      <button class="boutbtn" id="btnRefreshHdr" onclick="refreshPage()">&#8635; Refresh</button>
       <button class="boutbtn" id="btnLogout">Keluar</button>
     </div>
   </header>
@@ -346,7 +345,7 @@ function renderApp(){
 //  TABUK
 // ================================================================
 function pgTabukSub(el){
-  el.innerHTML='<div class="ph"><h2>Submit Laporan Jumat Berkah</h2><p>Catat kegiatan distribusi makanan setiap Jumat</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Submit Laporan Jumat Berkah</h2><p>Catat kegiatan distribusi makanan setiap Jumat</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Jumat Berkah</div><div class="cbody">'+
     '<div class="fg2"><div><label class="fl">Tanggal <span class="req">*</span></label><input type="date" id="ft" value="'+td()+'"></div>'+
     '<div><label class="fl">Menu <span class="req">*</span></label><input type="text" id="fm" placeholder="cth: Nasi Ayam, Soto..."></div>'+
@@ -369,7 +368,7 @@ function pgTabukMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
   var yOpts=''; for(var y=curY;y>=curY-2;y--) yOpts+='<option value="'+y+'">'+y+'</option>';
-  el.innerHTML='<div class="ph"><h2>Monitor Jumat Berkah</h2><p>Riwayat dan statistik</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Monitor Jumat Berkah</h2><p>Riwayat dan statistik</p></div>'+
     '<div id="tStat">'+SK(3)+'</div>'+
     '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Grafik Peserta per 6 Bulan</b><div style="margin-top:12px"><canvas id="chT" height="80"></canvas></div></div>'+
     '<div class="divhr"></div>'+
@@ -417,7 +416,7 @@ function pgBadarSub(el){
   var pagiHtml='', soreHtml='';
   for(var i=0;i<BADAR_PAGI_IT.length;i++) pagiHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_PAGI_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+BADAR_PAGI_IT[i]+'</span></div>';
   for(var i=0;i<BADAR_SORE_IT.length;i++) soreHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+BADAR_SORE_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+BADAR_SORE_IT[i]+'</span></div>';
-  el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Misno</h2><p>Checklist harian aktivitas kebersihan masjid</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Misno</h2><p>Checklist harian aktivitas kebersihan masjid</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Harian</div><div class="cbody">'+
     '<div class="fg2" style="grid-template-columns:1fr auto">'+
     '<div><label class="fl">Tanggal <span class="req">*</span></label><input type="date" id="b_tgl" value="'+td()+'" onchange="chkSabAhad()"></div>'+
@@ -478,7 +477,7 @@ function draftBadar(){
 function pgBadarMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Misno</h2><p>Riwayat laporan harian</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Misno</h2><p>Riwayat laporan harian</p></div>'+
     '<div id="bdStat">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div class="chead">Tabel Riwayat<div class="fbr">'+
     '<div><label class="fl" style="margin-bottom:3px">Bulan</label><select id="b_fm" onchange="loadBadar()"><option value="">Semua</option>'+mOpts+'</select></div>'+
@@ -529,7 +528,7 @@ function loadBadar(){
 // ================================================================
 function pgKhandaqSub(el){
   var ciHtml=''; for(var i=0;i<KHANDAQ_IT.length;i++) ciHtml+='<div class="ci" onclick="this.classList.toggle(&quot;on&quot;)" data-v="'+KHANDAQ_IT[i]+'"><div class="cbox">v</div><span><b style="color:#666;margin-right:4px">'+(i+1)+'.</b>'+KHANDAQ_IT[i]+'</span></div>';
-  el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Wahyudin</h2><p>Checklist harian aktivitas kebersihan lantai 2</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Submit Laporan Kebersihan - Wahyudin</h2><p>Checklist harian aktivitas kebersihan lantai 2</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Harian</div><div class="cbody">'+
     '<div class="fg2" style="grid-template-columns:1fr auto">'+
     '<div><label class="fl">Tanggal <span class="req">*</span></label><input type="date" id="k_tgl" value="'+td()+'" onchange="chkSabAhadK()"></div>'+
@@ -575,7 +574,7 @@ function draftKhandaq(){
 function pgKhandaqMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Wahyudin</h2><p>Riwayat laporan harian</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Wahyudin</h2><p>Riwayat laporan harian</p></div>'+
     '<div id="kdStat">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div class="chead">Tabel Riwayat<div class="fbr">'+
     '<div><label class="fl" style="margin-bottom:3px">Bulan</label><select id="k_fm" onchange="loadKhandaq()"><option value="">Semua</option>'+mOpts+'</select></div>'+
@@ -612,7 +611,7 @@ function loadKhandaq(){
 //  OJOL
 // ================================================================
 function pgOjolSub(el){
-  el.innerHTML='<div class="ph"><h2>Submit Laporan Ojol</h2><p>Catat kegiatan distribusi bantuan paket</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Submit Laporan Ojol</h2><p>Catat kegiatan distribusi bantuan paket</p></div>'+
     '<div class="card"><div class="chead">Form Laporan Distribusi</div><div class="cbody">'+
     '<div class="fg2">'+
     '<div><label class="fl">Tanggal Kegiatan <span class="req">*</span></label><input type="date" id="oj_tgl" value="'+td()+'"></div>'+
@@ -656,7 +655,7 @@ function draftOjol(){
 function pgOjolMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Monitor Distribusi Ojol</h2><p>Riwayat dan statistik distribusi bantuan</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Monitor Distribusi Ojol</h2><p>Riwayat dan statistik distribusi bantuan</p></div>'+
     '<div id="ojStat">'+SK(3)+'</div>'+
     '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Grafik Penerima per Bulan</b><div style="margin-top:12px"><canvas id="chOj" height="80"></canvas></div></div>'+
     '<div class="divhr"></div>'+
@@ -706,7 +705,7 @@ function chartLine(cvId,chKey,items){
 function pgBendumSub(el){
   var rekOpts='<option value="">-- Pilih Rekening --</option>';
   for(var i=0;i<REKENING.length;i++) rekOpts+='<option value="'+REKENING[i]+'">'+REKENING[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Submit Data Keuangan</h2><p>Catat pemasukan dan pengeluaran kas masjid</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Submit Data Keuangan</h2><p>Catat pemasukan dan pengeluaran kas masjid</p></div>'+
     '<div class="card"><div class="chead">Form Transaksi Keuangan</div><div class="cbody">'+
     '<div class="fg2">'+
     '<div><label class="fl">Tanggal <span class="req">*</span></label><input type="date" id="ktgl" value="'+td()+'"></div>'+
@@ -753,7 +752,7 @@ function draftKeu(){
 function pgBendumLap(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Laporan Keuangan</h2><p>Rekap pemasukan dan pengeluaran kas masjid</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Laporan Keuangan</h2><p>Rekap pemasukan dan pengeluaran kas masjid</p></div>'+
     '<div id="kStat">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div class="chead">Tabel Transaksi<div class="fbr">'+
     '<div><label class="fl" style="margin-bottom:3px">Bulan</label><select id="kfmon" onchange="loadKeu()"><option value="">Semua</option>'+mOpts+'</select></div>'+
@@ -795,7 +794,7 @@ function loadKeu(){
 //  ADMIN
 // ================================================================
 function pgAdminSum(el){
-  el.innerHTML='<div class="ph"><h2>Dashboard Admin - Ringkasan</h2><p>Data kesimpulan semua tim</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Dashboard Admin - Ringkasan</h2><p>Data kesimpulan semua tim</p></div>'+
     '<div id="admC">'+SK(5)+'</div>'+
     '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Grafik Peserta Jumat Berkah per 6 Bulan</b><div style="margin-top:12px"><canvas id="chA" height="70"></canvas></div></div>';
   gasCall('getAdminSummary',[],function(res){
@@ -828,7 +827,7 @@ function pgAdminSum(el){
   },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminBudget(el){
-  el.innerHTML='<div class="ph"><h2>Kelola Budget Tim Tabuk</h2><p>Tetapkan posisi anggaran kegiatan Jumat Berkah</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div><div id="bCard">'+SK(3)+'</div>';
+  el.innerHTML='<div class="ph"><h2>Kelola Budget Tim Tabuk</h2><p>Tetapkan posisi anggaran kegiatan Jumat Berkah</p></div><div id="bCard">'+SK(3)+'</div>';
   gasCall('getBudget',[],function(bg){
     document.getElementById('bCard').innerHTML=
       '<div class="card" style="max-width:480px"><div class="chead">Isian Posisi Budget</div><div class="cbody">'+
@@ -849,19 +848,19 @@ function saveBudget(){
   },function(m){ btn.disabled=false; btn.textContent='Simpan Budget'; toast('Gagal: '+m,false); });
 }
 function pgAdminTabuk(el){
-  el.innerHTML='<div class="ph"><h2>Data Tim Tabuk</h2><p>Seluruh laporan Jumat Berkah</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Data Tim Tabuk</h2><p>Seluruh laporan Jumat Berkah</p></div>'+
     '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Menu</th><th>Porsi</th><th>Peserta</th><th>Anggaran</th><th>Catatan</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aT"><tr><td colspan="8">'+SK(2)+'</td></tr></tbody></table></div></div>';
   gasCall('getTabuk',[{}],function(res){ var data=res.data||[], b=document.getElementById('aT'); if(!data.length){ b.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i]; rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.menu+'</td><td>'+d.porsi+'</td><td><b>'+d.peserta+'</b></td><td>'+rp(d.anggaran)+'</td><td style="color:#aaa;font-size:12px">'+(d.catatan||'-')+'</td><td><button class="btnhps" onclick="hapusData(\'tabuk_data\',\''+d.id+'\',pgAdminTabuk)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminBadar(el){
-  el.innerHTML='<div class="ph"><h2>Data Misno - Kebersihan</h2><p>Seluruh laporan harian</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Data Misno - Kebersihan</h2><p>Seluruh laporan harian</p></div>'+
     '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Pagi</th><th>Sore</th><th>Catatan</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aBd"><tr><td colspan="7">'+SK(2)+'</td></tr></tbody></table></div></div>';
   gasCall('getKebersihan',['badar',{}],function(res){ var data=res.data||[], b=document.getElementById('aBd'); if(!data.length){ b.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i], pl=d.sesi_pagi?d.sesi_pagi.length:0, sl=d.sesi_sore?d.sesi_sore.length:0; rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td><span class="badge '+(pl===BADAR_PAGI_IT.length?'bg':pl>0?'bo':'bw')+'">'+pl+'/'+BADAR_PAGI_IT.length+'</span></td><td><span class="badge '+(sl===BADAR_SORE_IT.length?'bg':sl>0?'bo':'bw')+'">'+sl+'/'+BADAR_SORE_IT.length+'</span></td><td style="color:#aaa;font-size:12px">'+(d.catatan_sabtu_ahad||'-')+'</td><td><button class="btnhps" onclick="hapusData(\'badar_data\',\''+d.id+'\',pgAdminBadar)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminKhandaq(el){
-  el.innerHTML='<div class="ph"><h2>Data Wahyudin - Kebersihan Lantai 2</h2><p>Seluruh laporan harian</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Data Wahyudin - Kebersihan Lantai 2</h2><p>Seluruh laporan harian</p></div>'+
     '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Checklist</th><th>Catatan</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aKd"><tr><td colspan="6">'+SK(2)+'</td></tr></tbody></table></div></div>';
   gasCall('getKebersihan',['khandaq',{}],function(res){ var data=res.data||[], b=document.getElementById('aKd'); if(!data.length){ b.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i], cl=d.checklist?d.checklist.length:0;
@@ -871,13 +870,13 @@ function pgAdminKhandaq(el){
       rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td>'+cTx+'</td><td style="color:#aaa;font-size:12px">'+(d.catatan_sabtu_ahad||'-')+'</td><td><button class="btnhps" onclick="hapusData(\'khandaq_data\',\''+d.id+'\',pgAdminKhandaq)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminOjol(el){
-  el.innerHTML='<div class="ph"><h2>Data Ojol - Distribusi Bantuan</h2><p>Seluruh data distribusi</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Data Ojol - Distribusi Bantuan</h2><p>Seluruh data distribusi</p></div>'+
     '<div class="card"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Penerima</th><th>Nominal/Paket</th><th>Biaya Lain</th><th>Keterangan</th><th>Total</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aOj"><tr><td colspan="8">'+SK(2)+'</td></tr></tbody></table></div></div>';
   gasCall('getOjol',[{}],function(res){ var data=res.data||[], b=document.getElementById('aOj'); if(!data.length){ b.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; } var rows=''; for(var i=0;i<data.length;i++){ var d=data[i]; rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><b>'+d.penerima+'</b></td><td>'+rp(d.nominal_per_paket)+'</td><td>'+rp(d.biaya_lain)+'</td><td style="font-size:12px;color:#aaa">'+(d.ket_biaya_lain||'-')+'</td><td><b>'+rp(d.total)+'</b></td><td><button class="btnhps" onclick="hapusData(\'ojol_data\',\''+d.id+'\',pgAdminOjol)">Hapus</button></td></tr>'; } b.innerHTML=rows; },function(m){ toast('Gagal: '+m,false); });
 }
 function pgAdminKeu(el){
-  el.innerHTML='<div class="ph"><h2>Data Keuangan</h2><p>Seluruh transaksi kas masjid</p><button class=\"btnrefresh\" onclick=\"refreshPage()\">&#8635; Refresh</button></div>'+
+  el.innerHTML='<div class="ph"><h2>Data Keuangan</h2><p>Seluruh transaksi kas masjid</p></div>'+
     '<div id="aKS">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Rekening</th><th>Keterangan</th><th>Jumlah</th><th>Saldo</th><th>Dicatat</th><th>Aksi</th></tr></thead>'+
     '<tbody id="aKT"><tr><td colspan="10">'+SK(2)+'</td></tr></tbody></table></div></div>';
