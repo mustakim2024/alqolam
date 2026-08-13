@@ -223,7 +223,7 @@ var KAT_IN  = ["Infaq Jumat","Donasi","Kas Bulanan","Bantuan Lembaga","Lainnya"]
 var KAT_OUT = ["Konsumsi Jumat","Kebersihan dan Peralatan","Listrik dan Air","Operasional","Lainnya"];
 
 // ---- API CALL via fetch GET ----
-var GAS_API = "https://script.google.com/macros/s/AKfycbzxiL4gxUDfUoS8IGcOcRnVTOwvXYEYssP593aGpDhB2o09SXLf176hHyQviLvegmKD/exec";
+var GAS_API = "https://script.google.com/macros/s/AKfycbycoUdZKRx81uYV8Jn2hKuGXBPzRu2Ty10Id8QPHCyQiliB5O2qs2_Bv4VZ9YIlTsiz/exec";
 
 function gasCall(fn, args, onOk, onErr) {
   var payload = encodeURIComponent(JSON.stringify({ fn: fn, args: args || [] }));
@@ -371,12 +371,16 @@ document.addEventListener('DOMContentLoaded', function(){
 // ================================================================
 function renderApp(){
   var r=CU.role, tabs, pages;
-  if(r==='tabuk'){ tabs=[{l:'Submit Laporan'},{l:"Monitor Jumat Berkah"}]; pages=[pgTabukSub,pgTabukMon]; }
-  else if(r==='badar'){ tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'}]; pages=[pgBadarSub,pgBadarMon]; }
-  else if(r==='khandaq'){ tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'}]; pages=[pgKhandaqSub,pgKhandaqMon]; }
-  else if(r==='ojol'){ tabs=[{l:'Submit Laporan'},{l:'Monitor Ojol'}]; pages=[pgOjolSub,pgOjolMon]; }
-  else if(r==='bendum'){ tabs=[{l:'Submit Keuangan'},{l:'Laporan Keuangan'}]; pages=[pgBendumSub,pgBendumLap]; }
-  else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu]; }
+  if(r==='tabuk'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Jumat Berkah'},{l:'Jadwal Ruangan'}]; pages=[pgTabukSub,pgTabukMon,pgRuanganJadwal]; }
+  else if(r==='badar'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'},{l:'Jadwal Ruangan'}]; pages=[pgBadarSub,pgBadarMon,pgRuanganJadwal]; }
+  else if(r==='khandaq'){ tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'},{l:'Jadwal Ruangan'}]; pages=[pgKhandaqSub,pgKhandaqMon,pgRuanganJadwal]; }
+  else if(r==='ojol'){    tabs=[{l:'Submit Laporan'},{l:'Monitor Ojol'},{l:'Jadwal Ruangan'}]; pages=[pgOjolSub,pgOjolMon,pgRuanganJadwal]; }
+  else if(r==='resq'){    tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgResqSub,pgResqMon,pgRuanganJadwal]; }
+  else if(r==='dakwah'){  tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgDakwahSub,pgDakwahMon,pgRuanganJadwal]; }
+  else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
+  else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
+  else if(r==='bendum'){  tabs=[{l:'Submit Keuangan'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumSub,pgBendumLap,pgRuanganJadwal]; }
+  else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
   for(var i=0;i<tabs.length;i++){
     (function(idx){
