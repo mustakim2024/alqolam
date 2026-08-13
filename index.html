@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function(){
         else if(p.type==='dakwah') {} // dakwah resets via re-render
         else if(p.type==='ruangan') rstRuangan();
         else { if(p.type==='badar') rstBadar(); else rstKhandaq(); } },
-      function(m){ btn.disabled=false; btn.textContent='Simpan'; toast('Gagal: '+m,false); }
+      function(m){ btn.disabled=false; btn.textContent='Simpan'; if(m&&m.indexOf('Di waktu yang sama')>=0){ toast(m,false); } else { toast('Gagal: '+m,false); } }
     );
   });
 });
