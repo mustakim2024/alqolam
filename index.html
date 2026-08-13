@@ -223,7 +223,7 @@ var KAT_IN  = ["Infaq Jumat","Donasi","Kas Bulanan","Bantuan Lembaga","Lainnya"]
 var KAT_OUT = ["Konsumsi Jumat","Kebersihan dan Peralatan","Listrik dan Air","Operasional","Lainnya"];
 
 // ---- API CALL via fetch GET ----
-var GAS_API = "https://script.google.com/macros/s/AKfycbycoUdZKRx81uYV8Jn2hKuGXBPzRu2Ty10Id8QPHCyQiliB5O2qs2_Bv4VZ9YIlTsiz/exec";
+var GAS_API = "https://script.google.com/macros/s/AKfycbzxiL4gxUDfUoS8IGcOcRnVTOwvXYEYssP593aGpDhB2o09SXLf176hHyQviLvegmKD/exec";
 
 function gasCall(fn, args, onOk, onErr) {
   var payload = encodeURIComponent(JSON.stringify({ fn: fn, args: args || [] }));
@@ -391,7 +391,21 @@ function renderApp(){
   }
   var mainEl=document.getElementById('mainEl'); mainEl.innerHTML='';
   for(var j=0;j<pages.length;j++){ var div=document.createElement('div'); div.className='pg'+(j===0?' on':''); div.id='pg'+j; mainEl.appendChild(div); }
-  for(var k=0;k<pages.length;k++) pages[k](document.getElementById('pg'+k));
+  // Render only first page on load; others render on tab click
+  pages[0](document.getElementById('pg0'));
+  // Add render-on-click for remaining tabs
+  var navTabs = nav.querySelectorAll('.ntab');
+  for(var k=1;k<pages.length;k++){
+    (function(ki){
+      navTabs[ki].addEventListener('click', function(){
+        var pgEl = document.getElementById('pg'+ki);
+        if(pgEl && !pgEl.dataset.loaded){
+          pages[ki](pgEl);
+          pgEl.dataset.loaded = '1';
+        }
+      });
+    })(k);
+  }
 }
 
 // ================================================================
@@ -1633,7 +1647,10 @@ function refreshPage() {
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
   var fns = roleFnMap[role] || [];
-  if (fns[activeIdx]) fns[activeIdx](el);
+  if (fns[activeIdx]) {
+    if(el) el.dataset.loaded = '1';
+    fns[activeIdx](el);
+  }
   toast('Halaman diperbarui', true);
 }
 </script>
