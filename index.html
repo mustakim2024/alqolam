@@ -2096,12 +2096,22 @@ function pgBendumImport(el) {
   cb.appendChild(olehWrap);
 
   var fileWrap = document.createElement('div'); fileWrap.style.marginBottom='14px';
-  fileWrap.appendChild(mkLabel('File CSV Mutasi BSI',true));
+  fileWrap.appendChild(mkLabel('File CSV atau PDF Mutasi BSI',true));
   var fileInp = document.createElement('input');
-  fileInp.type='file'; fileInp.id='imp_file'; fileInp.accept='.csv';
+  fileInp.type='file'; fileInp.id='imp_file'; fileInp.accept='.csv,.pdf';
   fileInp.style.cssText='display:block;margin-top:6px;font-size:13px';
-  fileInp.onchange = function(){ parseBsiCsv(this); };
+  fileInp.onchange = function(){
+    var f=this.files[0]; if(!f) return;
+    var ext=f.name.split('.').pop().toLowerCase();
+    if(ext==='pdf') parseBsiPdf(f);
+    else parseBsiCsv(this);
+  };
   fileWrap.appendChild(fileInp);
+
+  var statusEl = document.createElement('div');
+  statusEl.id = 'imp_pdf_status';
+  statusEl.style.cssText = 'margin-top:6px;font-size:12px;color:#888';
+  fileWrap.appendChild(statusEl);
   cb.appendChild(fileWrap);
 
   card.appendChild(ch); card.appendChild(cb);
@@ -2233,6 +2243,7 @@ function renderImportPreview(transactions, periode, rekeningNo, rekeningName) {
       '<td><span class="badge '+(t.jenis==='pemasukan'?'bb':'br')+'">'+
         (t.jenis==='pemasukan'?'Masuk':'Keluar')+'</span></td>'+
       '<td style="font-size:12px">'+t.keterangan+'</td>'+
+      '<td><input type="text" class="imp_cat" data-idx="'+i+'" placeholder="Catatan..." maxlength="100" style="width:100%;font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px"></td>'+
       '<td style="font-weight:700;color:'+(t.jenis==='pemasukan'?'#1a4a8a':'#c0392b')+'">'+rp(t.jumlah)+'</td>'+
       '</tr>';
   });
@@ -2283,7 +2294,8 @@ function submitImportBsi() {
       return;
     }
     var t=selected[idx];
-    var catVal=document.getElementById('imp_catatan')?document.getElementById('imp_catatan').value.trim():'';
+    var catEl=document.querySelector('.imp_cat[data-idx="'+idx+'"]');
+    var catVal=catEl?catEl.value.trim():'';
     gasCall('saveKeuangan',[{
       tanggal:t.tanggal, jenis:t.jenis,
       kategori:'Import BSI', keterangan:t.keterangan,
@@ -2296,6 +2308,145 @@ function submitImportBsi() {
     },function(){ idx++; next(); });
   }
   next();
+}
+
+
+
+// ================================================================
+//  BSI PDF PARSER - menggunakan PDF.js (via CDN)
+//  Parse Account Statement BSI langsung di browser
+// ================================================================
+
+// PDF.js will be loaded dynamically
+var PDFJS_LOADED = false;
+
+function loadPdfJs(callback) {
+  if (PDFJS_LOADED) { callback(); return; }
+  var script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  script.onload = function() {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    PDFJS_LOADED = true;
+    callback();
+  };
+  document.head.appendChild(script);
+}
+
+function parseBsiPdf(file) {
+  var statusEl = document.getElementById('imp_pdf_status');
+  if (statusEl) { statusEl.textContent = 'Memuat PDF.js...'; statusEl.style.color = '#888'; }
+
+  loadPdfJs(function() {
+    if (statusEl) statusEl.textContent = 'Membaca PDF...';
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var arrayBuffer = e.target.result;
+      pdfjsLib.getDocument({ data: arrayBuffer }).promise.then(function(pdf) {
+        var totalPages = pdf.numPages;
+        var allText = '';
+        var pagePromises = [];
+
+        for (var i = 1; i <= totalPages; i++) {
+          pagePromises.push(
+            pdf.getPage(i).then(function(page) {
+              return page.getTextContent().then(function(tc) {
+                // Sort items by Y position (top to bottom), then X (left to right)
+                var items = tc.items.slice().sort(function(a,b){
+                  var dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+                  return dy !== 0 ? dy : a.transform[4] - b.transform[4];
+                });
+                // Group into lines by Y position
+                var lines = [], curY = null, curLine = [];
+                items.forEach(function(item) {
+                  var y = Math.round(item.transform[5]);
+                  if (curY === null) curY = y;
+                  if (Math.abs(y - curY) > 5) {
+                    if (curLine.length) lines.push(curLine.join(' '));
+                    curLine = []; curY = y;
+                  }
+                  curLine.push(item.str);
+                });
+                if (curLine.length) lines.push(curLine.join(' '));
+                return lines.join('\n');
+              });
+            })
+          );
+        }
+
+        Promise.all(pagePromises).then(function(pageTexts) {
+          allText = pageTexts.join('\n');
+          var result = parseBsiPdfText(allText);
+          if (result.error) {
+            toast('PDF tidak dikenali: ' + result.error, false);
+            if (statusEl) { statusEl.textContent = 'Gagal: ' + result.error; statusEl.style.color = '#c0392b'; }
+            return;
+          }
+          window._impTrx       = result.transactions;
+          window._impRekNo     = result.rekeningNo;
+          window._impRekName   = result.rekeningName;
+          window._impPeriode   = result.periode;
+          if (statusEl) { statusEl.textContent = result.transactions.length + ' transaksi berhasil dibaca dari PDF.'; statusEl.style.color = '#0a5c2e'; }
+          renderImportPreview(result.transactions, result.periode, result.rekeningNo, result.rekeningName);
+        });
+      }).catch(function(err) {
+        toast('Gagal membaca PDF: ' + err.message, false);
+        if (statusEl) { statusEl.textContent = 'Error: ' + err.message; statusEl.style.color = '#c0392b'; }
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function parseBsiPdfText(text) {
+  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+
+  // Extract rekening number
+  var rekeningNo = '', periode = '';
+  for (var i = 0; i < lines.length; i++) {
+    var m = lines[i].match(/Rekening\s*:?\s*(\d{10,})/);
+    if (m) { rekeningNo = m[1]; }
+    var p = lines[i].match(/Date\s*:?\s*(.+\d{4})/);
+    if (p) { periode = p[1].trim(); }
+  }
+
+  if (!rekeningNo) return { error: 'Nomor rekening tidak ditemukan. Pastikan file adalah Account Statement BSI.' };
+
+  var rekeningName = REKENING_MAP[rekeningNo] || ('BSI ' + rekeningNo);
+
+  // Parse transaction lines
+  // Pattern: date YYYY-MM-DD, then description, IDR, amount, DB|CR, saldo
+  var trxPattern = /(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}:\d{2}\s*\S*\s+(.+?)\s+IDR\s+([\d,]+(?:\.\d+)?)\s*(DB|CR)\s+([\d,]+(?:\.\d+)?)/;
+  // Alternative for 1001009121 format (space between FT and description)
+  var trxPattern2 = /(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}:\d{2}\s+\S+\s+(.+?)\s+IDR\s+([\d,]+(?:\.\d+)?)\s*(DB|CR)\s+([\d,]+(?:\.\d+)?)/;
+
+  var transactions = [];
+
+  lines.forEach(function(line) {
+    var m = line.match(trxPattern) || line.match(trxPattern2);
+    if (!m) return;
+
+    var tgl     = m[1];
+    var desk    = m[2].trim();
+    var jumlah  = Math.round(Number(m[3].replace(/,/g,'')));
+    var dbcr    = m[4];
+    var jenis   = dbcr === 'CR' ? 'pemasukan' : 'pengeluaran';
+
+    if (!jumlah || jumlah <= 0) return;
+
+    // Clean up description - remove FT numbers at start
+    desk = desk.replace(/^FT\w+\s+/, '').replace(/^\w{15,}\s+/, '').trim();
+
+    transactions.push({
+      tanggal: tgl,
+      keterangan: desk,
+      jenis: jenis,
+      jumlah: jumlah,
+      selected: true
+    });
+  });
+
+  return { rekeningNo: rekeningNo, rekeningName: rekeningName, periode: periode, transactions: transactions };
 }
 
 
