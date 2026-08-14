@@ -1662,7 +1662,7 @@ function pgMonitorDash(el) {
   var chRow = document.createElement('div');
   chRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0';
   chRow.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;align-items:start">'+
     '<div class="chw">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<b style="font-size:13px;color:#0a5c2e">Kegiatan per Tim</b>'+
@@ -1670,13 +1670,13 @@ function pgMonitorDash(el) {
     '<button class="jenis-tab on" id="ch_tim_bulan" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'bulan\')">Bulan</button>'+
     '<button class="jenis-tab" id="ch_tim_tahun" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'tahun\')">Tahun</button>'+
     '</div></div>'+
-    '<canvas id="ch_mon_tim" height="160"></canvas></div>'+
+    '<canvas id="ch_mon_tim" height="110"></canvas></div>'+
     '<div class="chw">'+
-    '<b style="font-size:13px;color:#0a5c2e">Pemesanan Ruangan per Lantai</b>'+
-    '<div style="margin-top:10px"><canvas id="ch_mon_rng" height="160"></canvas></div></div>'+
+    '<b style="font-size:13px;color:#0a5c2e">Ruangan per Lantai</b>'+
+    '<div style="margin-top:8px"><canvas id="ch_mon_rng" height="180"></canvas></div></div>'+
     '</div>'+
     '<div class="chw" style="margin-bottom:16px">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">'+
     '<b style="font-size:13px;color:#0a5c2e">Keuangan: Pemasukan &amp; Pengeluaran</b>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
     '<div><label class="fl" style="margin-bottom:2px;font-size:11px">Dari Bulan</label>'+
@@ -1687,7 +1687,7 @@ function pgMonitorDash(el) {
     '<select id="keu_yr" style="font-size:11px;padding:3px"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></div>'+
     '<button class="btno" style="font-size:11px;padding:4px 10px" onclick="reloadKeuPerkan()">Filter</button>'+
     '</div></div>'+
-    '<canvas id="ch_keu_pekan" height="80"></canvas></div>';
+    '<canvas id="ch_keu_pekan" height="70"></canvas></div>';
   el.appendChild(chRow);
 
   var divhr = document.createElement('div'); divhr.className='divhr'; el.appendChild(divhr);
