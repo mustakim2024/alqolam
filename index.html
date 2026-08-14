@@ -1662,15 +1662,15 @@ function pgMonitorDash(el) {
   var chRow = document.createElement('div');
   chRow.style.cssText = 'display:block;margin:0 0 16px 0';
   chRow.innerHTML =
-    '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;align-items:start">'+
-    '<div class="chw">'+
+    '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch">'+
+    '<div class="chw" style="display:flex;flex-direction:column">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<b style="font-size:13px;color:#0a5c2e">Kegiatan per Tim</b>'+
     '<div style="display:flex;gap:6px">'+
     '<button class="jenis-tab on" id="ch_tim_bulan" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'bulan\')">Bulan</button>'+
     '<button class="jenis-tab" id="ch_tim_tahun" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'tahun\')">Tahun</button>'+
     '</div></div>'+
-    '<canvas id="ch_mon_tim" height="180"></canvas></div>'+
+    '<div style="flex:1;min-height:0"><canvas id="ch_mon_tim" style="width:100%!important"></canvas></div></div>'+
     '<div class="chw" style="display:flex;flex-direction:column">'+
     '<b style="font-size:13px;color:#0a5c2e">Ruangan per Lantai</b>'+
     '<div style="margin-top:8px;flex:1"><canvas id="ch_mon_rng" style="height:280px"></canvas></div></div>'+
@@ -1826,7 +1826,7 @@ function renderChartTim(res) {
           };
         })
       },
-      options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:6}}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}},y:{grid:{display:false}}}}
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:6}}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}},y:{grid:{display:false}}}}
     });
   }
 }
