@@ -1662,31 +1662,32 @@ function pgMonitorDash(el) {
   var chRow = document.createElement('div');
   chRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0';
   chRow.innerHTML =
-    '<div class="chw" style="grid-column:1/-1">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="chw">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<b style="font-size:13px;color:#0a5c2e">Kegiatan per Tim</b>'+
     '<div style="display:flex;gap:6px">'+
     '<button class="jenis-tab on" id="ch_tim_bulan" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'bulan\')">Bulan</button>'+
     '<button class="jenis-tab" id="ch_tim_tahun" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'tahun\')">Tahun</button>'+
     '</div></div>'+
-    '<canvas id="ch_mon_tim" height="80"></canvas></div>'+
-    '<div class="chw" style="max-width:340px">'+
-    '<b style="font-size:13px;color:#0a5c2e">Ruangan per Lantai</b>'+
-    '<div style="margin-top:10px;max-height:180px"><canvas id="ch_mon_rng" height="150"></canvas></div></div>'+
+    '<canvas id="ch_mon_tim" height="160"></canvas></div>'+
     '<div class="chw">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
-    '<b style="font-size:13px;color:#0a5c2e">Keuangan per Pekan</b>'+
+    '<b style="font-size:13px;color:#0a5c2e">Pemesanan Ruangan per Lantai</b>'+
+    '<div style="margin-top:10px"><canvas id="ch_mon_rng" height="160"></canvas></div></div>'+
     '</div>'+
-    '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
-    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Dari Bulan</label>'+
+    '<div class="chw" style="margin-bottom:16px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">'+
+    '<b style="font-size:13px;color:#0a5c2e">Keuangan: Pemasukan &amp; Pengeluaran</b>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+    '<div><label class="fl" style="margin-bottom:2px;font-size:11px">Dari Bulan</label>'+
     '<select id="keu_from" style="font-size:11px;padding:3px"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ags</option><option value="9">Sep</option><option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option></select></div>'+
-    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Sampai Bulan</label>'+
+    '<div><label class="fl" style="margin-bottom:2px;font-size:11px">Sampai Bulan</label>'+
     '<select id="keu_to" style="font-size:11px;padding:3px"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ags</option><option value="9">Sep</option><option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option></select></div>'+
-    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Tahun</label>'+
+    '<div><label class="fl" style="margin-bottom:2px;font-size:11px">Tahun</label>'+
     '<select id="keu_yr" style="font-size:11px;padding:3px"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></div>'+
-    '<button class="btno" style="font-size:11px;padding:4px 10px;align-self:flex-end" onclick="reloadKeuPerkan()">Filter</button>'+
-    '</div>'+
-    '<canvas id="ch_keu_pekan" height="120"></canvas></div>';
+    '<button class="btno" style="font-size:11px;padding:4px 10px" onclick="reloadKeuPerkan()">Filter</button>'+
+    '</div></div>'+
+    '<canvas id="ch_keu_pekan" height="80"></canvas></div>';
   el.appendChild(chRow);
 
   var divhr = document.createElement('div'); divhr.className='divhr'; el.appendChild(divhr);
@@ -1793,7 +1794,7 @@ function renderChartTim(res) {
   }
 
   var datasets = [
-    {label:'Jumber', data:groupData(res.tabuk),   color:'#0a5c2e'},
+    {label:'Jumat Berkah', data:groupData(res.tabuk),   color:'#0a5c2e'},
     {label:'Ojol',         data:groupData(res.ojol),    color:'#4A235A'},
     {label:'Resq',         data:groupData(res.resq),    color:'#8B0000'},
     {label:'Dakwah',       data:groupData(res.dakwah),  color:'#1A5A8A'},
@@ -1825,7 +1826,7 @@ function renderChartTim(res) {
           };
         })
       },
-      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}}}
+      options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:6}}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}},y:{grid:{display:false}}}}
     });
   }
 }
