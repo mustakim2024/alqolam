@@ -209,8 +209,9 @@ var USERS_OFF = {
   sarpras: {pw:'amannyaman2026', name:'Sarpras',  role:'sarpras'},
   sdit:    {pw:'cekatan2026',    name:'SDIT',     role:'ruangan'},
   tkit:    {pw:'pinter2026',     name:'TKIT',     role:'ruangan'},
-  ldk:     {pw:'dakwah2026',     name:'LDK',      role:'ruangan'},
   yayasan: {pw:'iqrokan2026',    name:'Yayasan',  role:'ruangan'},
+  ldk:     {pw:'dakwah2026',     name:'LDK',      role:'monitor'},
+  bph:     {pw:'pantau2026',     name:'BPH',      role:'monitor'},
   ltq:     {pw:'ngaji2026',      name:'LTQ',      role:'ruangan'},
   ptq:     {pw:'ngapal2026',     name:'PTQ',      role:'ruangan'},
   lppdi:   {pw:'ceramah2026',    name:'LPPDI',    role:'ruangan'},
@@ -383,6 +384,7 @@ function renderApp(){
   else if(r==='dakwah'){  tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgDakwahSub,pgDakwahMon,pgRuanganJadwal]; }
   else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
+  else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Submit Keuangan'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumSub,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
@@ -1609,6 +1611,270 @@ function submitRngEksternal() {
 }
 
 
+
+// ================================================================
+//  MONITOR DASHBOARD (BPH / LDK / Admin)
+// ================================================================
+
+function pgMonitorDash(el) {
+  el.innerHTML = '';
+  el.appendChild(mkPh('Dashboard Monitor', 'Resume semua kegiatan BPH Masjid Al Qolam'));
+
+  // Summary cards placeholder
+  var statDiv = document.createElement('div');
+  statDiv.id = 'mon_stat';
+  statDiv.innerHTML = SK(4);
+  el.appendChild(statDiv);
+
+  // Charts row
+  var chRow = document.createElement('div');
+  chRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0';
+  chRow.innerHTML =
+    '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Kegiatan per Tim per Bulan</b><div style="margin-top:10px"><canvas id="ch_mon_tim" height="120"></canvas></div></div>'+
+    '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Pemesanan Ruangan per Lantai</b><div style="margin-top:10px"><canvas id="ch_mon_rng" height="120"></canvas></div></div>';
+  el.appendChild(chRow);
+
+  var divhr = document.createElement('div'); divhr.className = 'divhr';
+  el.appendChild(divhr);
+
+  // Section tabs
+  var secTabs = document.createElement('div');
+  secTabs.className = 'jenis-tabs';
+  secTabs.style.marginBottom = '0';
+  var sections = [
+    {id:'mon_jumat',   label:'Jumat Berkah'},
+    {id:'mon_misno',   label:'Misno'},
+    {id:'mon_wahyudin',label:'Wahyudin'},
+    {id:'mon_ojol',    label:'Ojol'},
+    {id:'mon_resq',    label:'Resq'},
+    {id:'mon_dakwah',  label:'Dakwah'},
+    {id:'mon_sarpras', label:'Sarpras'},
+    {id:'mon_ruangan', label:'Ruangan'}
+  ];
+  sections.forEach(function(s, idx) {
+    var tab = document.createElement('div');
+    tab.className = 'jenis-tab' + (idx === 0 ? ' on' : '');
+    tab.textContent = s.label;
+    tab.onclick = (function(sid, t) {
+      return function() {
+        document.querySelectorAll('.mon-sec').forEach(function(el){ el.style.display='none'; });
+        document.querySelectorAll('.jenis-tabs .jenis-tab').forEach(function(el){ el.classList.remove('on'); });
+        var sec = document.getElementById(sid);
+        if(sec) sec.style.display='block';
+        t.classList.add('on');
+      };
+    })(s.id, tab);
+    secTabs.appendChild(tab);
+  });
+  el.appendChild(secTabs);
+
+  // Section content areas
+  sections.forEach(function(s, idx) {
+    var div = document.createElement('div');
+    div.id = s.id;
+    div.className = 'mon-sec';
+    div.style.display = idx === 0 ? 'block' : 'none';
+    div.innerHTML = SK(2);
+    el.appendChild(div);
+  });
+
+  // Load all data
+  loadMonitorAll();
+}
+
+function loadMonitorAll() {
+  gasCall('getMonitorSummary',[{}],function(res){
+    if(!res.ok){ toast('Gagal load data: '+(res.msg||''), false); return; }
+
+    var MN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+
+    // ---- SUMMARY CARDS ----
+    var totalKeg = (res.resq||[]).length + (res.dakwah||[]).length + (res.sarpras||[]).length;
+    var totalPeserta = 0;
+    ['resq','dakwah','sarpras'].forEach(function(k){
+      (res[k]||[]).forEach(function(d){ totalPeserta += Number(d.peserta)||0; });
+    });
+    var rngConfirmed = (res.ruangan||[]).filter(function(d){ return d.status==='CONFIRMED'; }).length;
+    var st = document.getElementById('mon_stat');
+    if(st) st.innerHTML = '<div class="sg">'+
+      '<div class="sc"><div class="sl">Laporan Jumat Berkah</div><div class="sv">'+(res.tabuk||[]).length+'</div><div class="sss">laporan</div></div>'+
+      '<div class="sc"><div class="sl">Total Kegiatan</div><div class="sv">'+totalKeg+'</div><div class="sss">kegiatan</div></div>'+
+      '<div class="sc"><div class="sl">Total Peserta</div><div class="sv">'+totalPeserta.toLocaleString('id-ID')+'</div><div class="sss">orang</div></div>'+
+      '<div class="sc"><div class="sl">Ruangan Confirmed</div><div class="sv">'+rngConfirmed+'</div><div class="sss">pemesanan</div></div>'+
+      '<div class="sc"><div class="sl">Distribusi Ojol</div><div class="sv">'+(res.ojol||[]).length+'</div><div class="sss">distribusi</div></div>'+
+      '</div>';
+
+    // ---- CHART: Kegiatan per Tim per Bulan ----
+    function countPerBulan(arr) {
+      var P = {};
+      (arr||[]).forEach(function(d){
+        var dt = new Date(d.tanggal);
+        var k = dt.getFullYear()+'-'+(dt.getMonth()+1);
+        P[k] = (P[k]||0) + 1;
+      });
+      return P;
+    }
+    var allKeys = {};
+    var timData = {
+      resq:    countPerBulan(res.resq),
+      dakwah:  countPerBulan(res.dakwah),
+      sarpras: countPerBulan(res.sarpras)
+    };
+    Object.keys(timData).forEach(function(k){
+      Object.keys(timData[k]).forEach(function(bk){ allKeys[bk]=1; });
+    });
+    var sortedKeys = Object.keys(allKeys).sort();
+    var lbls = sortedKeys.map(function(k){
+      var p = k.split('-'); return MN[parseInt(p[1])-1]+' '+p[0];
+    });
+    var cv1 = document.getElementById('ch_mon_tim');
+    if(cv1 && typeof Chart !== 'undefined') {
+      if(CH._mon_tim) CH._mon_tim.destroy();
+      CH._mon_tim = new Chart(cv1, {
+        type: 'bar',
+        data: {
+          labels: lbls,
+          datasets: [
+            {label:'Resq',    data:sortedKeys.map(function(k){return timData.resq[k]||0;}),    backgroundColor:'rgba(139,0,0,0.7)'},
+            {label:'Dakwah',  data:sortedKeys.map(function(k){return timData.dakwah[k]||0;}),  backgroundColor:'rgba(26,90,138,0.7)'},
+            {label:'Sarpras', data:sortedKeys.map(function(k){return timData.sarpras[k]||0;}), backgroundColor:'rgba(90,58,26,0.7)'}
+          ]
+        },
+        options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}}}
+      });
+    }
+
+    // ---- CHART: Ruangan per Lantai ----
+    var lantaiCount = {};
+    (res.ruangan||[]).forEach(function(d){
+      var l = d.lantai||'Unknown';
+      lantaiCount[l] = (lantaiCount[l]||0)+1;
+    });
+    var cv2 = document.getElementById('ch_mon_rng');
+    if(cv2 && typeof Chart !== 'undefined') {
+      if(CH._mon_rng) CH._mon_rng.destroy();
+      CH._mon_rng = new Chart(cv2, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(lantaiCount),
+          datasets: [{
+            data: Object.values(lantaiCount),
+            backgroundColor: ['#0a5c2e','#c9981a','#1a4a8a','#8b0000']
+          }]
+        },
+        options:{responsive:true,plugins:{legend:{position:'bottom'}}}
+      });
+    }
+
+    // ---- SECTION TABLES ----
+
+    // Jumat Berkah
+    var jSec = document.getElementById('mon_jumat');
+    if(jSec) {
+      var data = res.tabuk||[];
+      jSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Laporan Jumat Berkah</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Menu</th><th>Porsi</th><th>Peserta</th><th>Anggaran</th><th>Catatan</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.menu+'</td><td>'+d.porsi+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td><td style="font-size:12px;color:#aaa">'+(d.catatan||'-')+'</td></tr>';
+        }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Misno (Badar)
+    var mSec = document.getElementById('mon_misno');
+    if(mSec) {
+      var data = res.badar||[];
+      mSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Misno</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Pagi</th><th>Sore</th><th>Catatan</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          var pl=d.sesi_pagi?d.sesi_pagi.length:0, sl=d.sesi_sore?d.sesi_sore.length:0;
+          var pT=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':pl===10?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">'+pl+'/10</span>';
+          var sT=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':sl===6?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">'+sl+'/6</span>';
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td>'+pT+'</td><td>'+sT+'</td><td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
+        }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Wahyudin (Khandaq)
+    var wSec = document.getElementById('mon_wahyudin');
+    if(wSec) {
+      var data = res.khandaq||[];
+      wSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Wahyudin</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Checklist</th><th>Catatan</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          var cl=d.checklist?d.checklist.length:0;
+          var cT=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':cl===4?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">'+cl+'/4</span>';
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td><td>'+cT+'</td><td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
+        }).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Ojol
+    var oSec = document.getElementById('mon_ojol');
+    if(oSec) {
+      var data = res.ojol||[];
+      var totOjol = 0; data.forEach(function(d){ totOjol+=Number(d.total)||0; });
+      oSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Distribusi Ojol — Total: '+rp(totOjol)+'</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Penerima</th><th>Nominal/Paket</th><th>Biaya Lain</th><th>Total</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.penerima+'</td><td>'+rp(d.nominal_per_paket)+'</td><td>'+rp(d.biaya_lain)+'</td><td><b>'+rp(d.total)+'</b></td></tr>';
+        }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Resq
+    var rSec = document.getElementById('mon_resq');
+    if(rSec) {
+      var data = res.resq||[];
+      rSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Kegiatan Resq</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Waktu</th><th>Kegiatan</th><th>Tempat</th><th>Peserta</th><th>Anggaran</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';
+        }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Dakwah
+    var dSec = document.getElementById('mon_dakwah');
+    if(dSec) {
+      var data = res.dakwah||[];
+      dSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Kegiatan Dakwah</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Jenis</th><th>Detail</th><th>Peserta</th><th>Anggaran</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          var detail = d.jenis==='rutin' ? d.sub_jenis+(d.pembicara?'<br><small style="color:#888">'+d.pembicara+'</small>':'') : d.nama_kegiatan+'<br><small style="color:#888">'+(d.tempat||'')+'</small>';
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td><span class="badge '+(d.jenis==='rutin'?'bb':'bo')+'">'+(d.jenis==='rutin'?'Rutin':'Insidental')+'</span></td><td style="font-size:13px">'+detail+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';
+        }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Sarpras
+    var sSec = document.getElementById('mon_sarpras');
+    if(sSec) {
+      var data = res.sarpras||[];
+      sSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Kegiatan Sarpras</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Waktu</th><th>Kegiatan</th><th>Tempat</th><th>Peserta</th><th>Anggaran</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';
+        }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+    // Ruangan
+    var rnSec = document.getElementById('mon_ruangan');
+    if(rnSec) {
+      var data = res.ruangan||[];
+      rnSec.innerHTML = '<div class="card" style="margin-top:12px"><div class="chead">Pemesanan Ruangan</div>'+
+        '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Waktu</th><th>Lantai</th><th>Kegiatan</th><th>Pengirim</th><th>Status</th></tr></thead>'+
+        '<tbody>'+(data.length ? data.map(function(d,i){
+          var stTag = d.status==='CONFIRMED'?'<span class="tag-confirmed">CONFIRMED</span>':'<span class="tag-unconfirmed">UNCONFIRMED</span>';
+          return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+d.waktu_start+' - '+d.waktu_stop+' WIB</td><td><span class="badge bg">'+d.lantai+'</span></td><td>'+d.nama_kegiatan+'</td><td style="font-size:12px">'+d.submitted_by+'</td><td>'+stTag+'</td></tr>';
+        }).join('') : '<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+
+  }, function(m){ toast('Gagal load: '+m, false); });
+}
+
 // ================================================================
 //  HAPUS DATA (ADMIN)
 // ================================================================
@@ -1647,6 +1913,8 @@ function refreshPage() {
     dakwah:  [pgDakwahSub,pgDakwahMon,pgRuanganJadwal],
     sarpras: [pgSarprasSub,pgSarprasMon,pgRuanganJadwal],
     ruangan: [pgRuanganSub,pgRuanganJadwal],
+    monitor: [pgMonitorDash,pgRuanganJadwal],
+    monitor: [pgMonitorDash,pgRuanganJadwal],
     bendum:  [pgBendumSub,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
