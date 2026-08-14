@@ -1662,16 +1662,31 @@ function pgMonitorDash(el) {
   var chRow = document.createElement('div');
   chRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0';
   chRow.innerHTML =
-    '<div class="chw">'+
+    '<div class="chw" style="grid-column:1/-1">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<b style="font-size:13px;color:#0a5c2e">Kegiatan per Tim</b>'+
     '<div style="display:flex;gap:6px">'+
     '<button class="jenis-tab on" id="ch_tim_bulan" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'bulan\')">Bulan</button>'+
     '<button class="jenis-tab" id="ch_tim_tahun" style="padding:3px 10px;font-size:11px" onclick="switchChartTim(\'tahun\')">Tahun</button>'+
     '</div></div>'+
-    '<canvas id="ch_mon_tim" height="130"></canvas></div>'+
-    '<div class="chw"><b style="font-size:13px;color:#0a5c2e">Pemesanan Ruangan per Lantai</b>'+
-    '<div style="margin-top:10px"><canvas id="ch_mon_rng" height="130"></canvas></div></div>';
+    '<canvas id="ch_mon_tim" height="80"></canvas></div>'+
+    '<div class="chw" style="max-width:340px">'+
+    '<b style="font-size:13px;color:#0a5c2e">Ruangan per Lantai</b>'+
+    '<div style="margin-top:10px;max-height:180px"><canvas id="ch_mon_rng" height="150"></canvas></div></div>'+
+    '<div class="chw">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<b style="font-size:13px;color:#0a5c2e">Keuangan per Pekan</b>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Dari Bulan</label>'+
+    '<select id="keu_from" style="font-size:11px;padding:3px"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ags</option><option value="9">Sep</option><option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option></select></div>'+
+    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Sampai Bulan</label>'+
+    '<select id="keu_to" style="font-size:11px;padding:3px"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ags</option><option value="9">Sep</option><option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option></select></div>'+
+    '<div><label class="fl" style="margin-bottom:3px;font-size:11px">Tahun</label>'+
+    '<select id="keu_yr" style="font-size:11px;padding:3px"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></div>'+
+    '<button class="btno" style="font-size:11px;padding:4px 10px;align-self:flex-end" onclick="reloadKeuPerkan()">Filter</button>'+
+    '</div>'+
+    '<canvas id="ch_keu_pekan" height="120"></canvas></div>';
   el.appendChild(chRow);
 
   var divhr = document.createElement('div'); divhr.className='divhr'; el.appendChild(divhr);
@@ -1759,6 +1774,7 @@ function loadMonitorAll() {
     renderChartTim(res);
     renderChartRuangan(res);
     renderMonitorTables(res);
+    setTimeout(reloadKeuPerkan, 100);
   }, function(m){ toast('Gagal load: '+m, false); });
 }
 
@@ -1777,7 +1793,7 @@ function renderChartTim(res) {
   }
 
   var datasets = [
-    {label:'Jumat Berkah', data:groupData(res.tabuk),   color:'#0a5c2e'},
+    {label:'Jumber', data:groupData(res.tabuk),   color:'#0a5c2e'},
     {label:'Ojol',         data:groupData(res.ojol),    color:'#4A235A'},
     {label:'Resq',         data:groupData(res.resq),    color:'#8B0000'},
     {label:'Dakwah',       data:groupData(res.dakwah),  color:'#1A5A8A'},
@@ -1809,7 +1825,7 @@ function renderChartTim(res) {
           };
         })
       },
-      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}}}
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}}}
     });
   }
 }
@@ -2002,6 +2018,48 @@ function renderMonitorTables(res) {
   }
 }
 
+
+
+function reloadKeuPerkan() {
+  var fromM = parseInt(document.getElementById('keu_from').value)||1;
+  var toM   = parseInt(document.getElementById('keu_to').value)||12;
+  var yr    = parseInt(document.getElementById('keu_yr').value)||new Date().getFullYear();
+  if(!MON_DATA.keuangan) return;
+  var data = (MON_DATA.keuangan||[]).filter(function(d){
+    var dt=new Date(d.tanggal);
+    return dt.getFullYear()===yr && (dt.getMonth()+1)>=fromM && (dt.getMonth()+1)<=toM;
+  });
+  // Group per week
+  var P={};
+  data.forEach(function(d){
+    var dt=new Date(d.tanggal);
+    var day=dt.getDay()||7;
+    var thu=new Date(dt); thu.setDate(dt.getDate()+4-day);
+    var jan1=new Date(thu.getFullYear(),0,1);
+    var wn=Math.ceil((((thu-jan1)/86400000)+1)/7);
+    var k='W'+String(wn).padStart(2,'0');
+    if(!P[k]) P[k]={masuk:0,keluar:0};
+    if(d.jenis==='pemasukan') P[k].masuk+=Number(d.jumlah)||0;
+    else P[k].keluar+=Number(d.jumlah)||0;
+  });
+  var keys=Object.keys(P).sort();
+  var cv=document.getElementById('ch_keu_pekan');
+  if(!cv||typeof Chart==='undefined') return;
+  if(CH._keu_pekan) CH._keu_pekan.destroy();
+  if(!keys.length){
+    var ctx=cv.getContext('2d');
+    ctx.clearRect(0,0,cv.width,cv.height);
+    return;
+  }
+  CH._keu_pekan=new Chart(cv,{
+    type:'line',
+    data:{labels:keys,datasets:[
+      {label:'Pemasukan', data:keys.map(function(k){return P[k].masuk;}), borderColor:'#1a4a8a',backgroundColor:'rgba(26,74,138,0.08)',borderWidth:2,fill:true,tension:0.3,pointRadius:3},
+      {label:'Pengeluaran',data:keys.map(function(k){return P[k].keluar;}),borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,0.08)',borderWidth:2,fill:true,tension:0.3,pointRadius:3}
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8}}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}
+  });
+}
 
 // ================================================================
 //  HAPUS DATA (ADMIN)
