@@ -385,7 +385,7 @@ function renderApp(){
   else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
-  else if(r==='bendum'){  tabs=[{l:'Submit Keuangan'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumSub,pgBendumLap,pgRuanganJadwal]; }
+  else if(r==='bendum'){  tabs=[{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
   for(var i=0;i<tabs.length;i++){
@@ -776,65 +776,61 @@ function chartLine(cvId,chKey,items){
 //  BENDUM
 // ================================================================
 function pgBendumSub(el){
-  var rekOpts='<option value="">-- Pilih Rekening --</option>';
-  for(var i=0;i<REKENING.length;i++) rekOpts+='<option value="'+REKENING[i]+'">'+REKENING[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Submit Data Keuangan</h2><p>Catat pemasukan dan pengeluaran kas masjid</p></div>'+
-    '<div class="card"><div class="chead">Form Transaksi Keuangan</div><div class="cbody">'+
-    '<div class="fg2">'+
-    '<div><label class="fl">Tanggal <span class="req">*</span></label><input type="date" id="ktgl" value="'+td()+'"></div>'+
-    '<div><label class="fl">Jenis <span class="req">*</span></label><select id="kjenis" onchange="updKat()"><option value="">-- Pilih --</option><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select></div>'+
-    '<div><label class="fl">Kategori <span class="req">*</span></label><select id="kkat"><option value="">-- Pilih Jenis Dulu --</option></select></div>'+
-    '<div><label class="fl">Jumlah <span class="req">*</span></label><div class="rpw"><span class="rppfx">Rp</span><input type="number" id="kjml" min="0" step="1000" placeholder="0"></div></div>'+
-    '</div>'+
-    '<div style="margin-bottom:14px"><label class="fl">Rekening Tujuan / Sumber <span class="req">*</span></label><select id="krek" onchange="showRekDetail()">'+rekOpts+'</select><div class="rek-box" id="rekDetail" style="display:none"></div></div>'+
-    '<div><label class="fl">Keterangan <span class="req">*</span></label><input type="text" id="kket" maxlength="100" placeholder="Keterangan transaksi..." oninput="uCC(&quot;kket&quot;,&quot;cck&quot;,100)"><div class="cc" id="cck">0/100</div></div>'+
-    '<div class="act"><button class="btno" onclick="rstKeu()">Reset</button><button class="btnp" onclick="draftKeu()">Pratinjau &amp; Konfirmasi</button></div>'+
-    '</div></div>';
+  // Upload CSV sebagai satu-satunya cara input keuangan
+  pgBendumImport(el);
 }
-function showRekDetail(){
-  var rek=document.getElementById('krek').value;
-  var box=document.getElementById('rekDetail');
-  if(rek){ box.style.display='block'; box.textContent='Rekening: '+rek; }
-  else { box.style.display='none'; }
-}
-function updKat(){
-  var j=document.getElementById('kjenis').value, kat=document.getElementById('kkat');
-  kat.innerHTML='<option value="">-- Pilih Kategori --</option>';
-  var list=j==='pemasukan'?KAT_IN:j==='pengeluaran'?KAT_OUT:[];
-  for(var i=0;i<list.length;i++) kat.innerHTML+='<option value="'+list[i]+'">'+list[i]+'</option>';
-}
-function rstKeu(){
-  ['ktgl','kjenis','kkat','krek','kjml','kket'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=id==='ktgl'?td():'';});
-  var cc=document.getElementById('cck');if(cc){cc.textContent='0/100';cc.className='cc';}
-  var rd=document.getElementById('rekDetail');if(rd)rd.style.display='none';
-}
-function draftKeu(){
-  var tgl=document.getElementById('ktgl').value,jenis=document.getElementById('kjenis').value,
-      kat=document.getElementById('kkat').value,jml=document.getElementById('kjml').value,
-      rek=document.getElementById('krek').value,ket=document.getElementById('kket').value.trim();
-  if(!tgl||!jenis||!kat||!jml||!rek||!ket){ toast('Lengkapi semua field wajib!',false); return; }
-  document.getElementById('draftT').innerHTML=
-    '<tr><td>Tanggal</td><td>'+fL(tgl)+'</td></tr>'+
-    '<tr><td>Jenis</td><td>'+(jenis==='pemasukan'?'Pemasukan':'Pengeluaran')+'</td></tr>'+
-    '<tr><td>Kategori</td><td>'+kat+'</td></tr>'+
-    '<tr><td>Rekening</td><td style="font-size:12px">'+rek+'</td></tr>'+
-    '<tr><td>Jumlah</td><td><b>'+rp(jml)+'</b></td></tr>'+
-    '<tr><td>Keterangan</td><td>'+ket+'</td></tr>';
-  PEND={type:'keu',tanggal:tgl,jenis:jenis,kategori:kat,rekening:rek,jumlah:Number(jml),keterangan:ket,dicatat_oleh:CU.name}; openM();
-}
+
 function pgBendumLap(el){
-  var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  var curY=new Date().getFullYear();
+  var MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
-  el.innerHTML='<div class="ph"><h2>Laporan Keuangan</h2><p>Rekap pemasukan dan pengeluaran kas masjid</p></div>'+
-    '<div id="kStat">'+SK(3)+'</div>'+
-    '<div class="card" style="margin-top:14px"><div class="chead">Tabel Transaksi<div class="fbr">'+
+
+  el.innerHTML='';
+  el.appendChild(mkPh('Laporan Keuangan','Rekap per rekening BSI'));
+
+  // Summary cards
+  var statDiv=document.createElement('div'); statDiv.id='kStat'; statDiv.innerHTML=SK(3);
+  el.appendChild(statDiv);
+
+  // Rekening tabs
+  var tabsDiv=document.createElement('div'); tabsDiv.className='jenis-tabs'; tabsDiv.style.marginBottom='0';
+  var allTabs=[{v:'',t:'Semua'}];
+  REKENING.forEach(function(r){ allTabs.push({v:r,t:r.split(' - ')[1]||r}); });
+
+  allTabs.forEach(function(tab,i){
+    var t=document.createElement('div');
+    t.className='jenis-tab'+(i===0?' on':'');
+    t.textContent=tab.t;
+    t.onclick=(function(v,el2){
+      return function(){
+        tabsDiv.querySelectorAll('.jenis-tab').forEach(function(x){x.classList.remove('on');});
+        el2.classList.add('on');
+        window._lapRek=v;
+        loadKeu();
+      };
+    })(tab.v,t);
+    tabsDiv.appendChild(t);
+  });
+  el.appendChild(tabsDiv);
+
+  // Filter + table card
+  var card=document.createElement('div'); card.className='card';
+  card.innerHTML='<div class="chead">Tabel Transaksi<div class="fbr">'+
     '<div><label class="fl" style="margin-bottom:3px">Bulan</label><select id="kfmon" onchange="loadKeu()"><option value="">Semua</option>'+mOpts+'</select></div>'+
-    '<div><label class="fl" style="margin-bottom:3px">Tahun</label><select id="kfyr" onchange="loadKeu()"><option value="">Semua</option><option value="'+curY+'">'+curY+'</option><option value="'+(curY-1)+'">'+(curY-1)+'</option></select></div>'+
-    '<div><label class="fl" style="margin-bottom:3px">Jenis</label><select id="kfjenis" onchange="loadKeu()"><option value="">Semua</option><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select></div>'+
-    '</div></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Rekening</th><th>Keterangan</th><th>Jumlah</th><th>Saldo</th></tr></thead>'+
-    '<tbody id="kTb"><tr><td colspan="8">'+SK(2)+'</td></tr></tbody></table></div></div>';
+    '<div><label class="fl" style="margin-bottom:3px">Tahun</label><select id="kfyr" onchange="loadKeu()">'+
+    '<option value="">Semua</option><option value="'+curY+'">'+curY+'</option><option value="'+(curY-1)+'">'+(curY-1)+'</option></select></div>'+
+    '<div><label class="fl" style="margin-bottom:3px">Jenis</label><select id="kfjenis" onchange="loadKeu()">'+
+    '<option value="">Semua</option><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select></div>'+
+    '</div></div>'+
+    '<div style="overflow-x:auto"><table class="tbl"><thead><tr>'+
+    '<th>#</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Rekening</th><th>Keterangan</th><th>Jumlah</th><th>Saldo</th>'+
+    '</tr></thead><tbody id="kTb"><tr><td colspan="8">'+SK(2)+'</td></tr></tbody></table></div>';
+  el.appendChild(card);
+
+  window._lapRek='';
   loadKeuStat(); loadKeu();
 }
+
 function loadKeuStat(){
   gasCall('getKeuanganSummary',[],function(r){
     var el=document.getElementById('kStat'); if(!el) return;
@@ -847,7 +843,9 @@ function loadKeu(){
   var mE=document.getElementById('kfmon'), yE=document.getElementById('kfyr'), jE=document.getElementById('kfjenis'), f={};
   if(mE&&mE.value) f.bulan=Number(mE.value); if(yE&&yE.value) f.tahun=Number(yE.value); if(jE&&jE.value) f.jenis=jE.value;
   gasCall('getKeuangan',[f],function(res){
-    var data=res.data||[], b=document.getElementById('kTb'); if(!b) return;
+    var rek=window._lapRek||'';
+    var data=(res.data||[]).filter(function(d){ return !rek || d.rekening===rek; });
+    var b=document.getElementById('kTb'); if(!b) return;
     if(!data.length){ b.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; }
     var rows=''; for(var i=0;i<data.length;i++){
       var d=data[i], isMsk=d.jenis==='pemasukan';
@@ -2062,6 +2060,240 @@ function reloadKeuPerkan() {
   });
 }
 
+
+// ================================================================
+//  IMPORT CSV BSI - Mutasi Rekening (per rekening)
+// ================================================================
+
+var REKENING_MAP = {
+  '1001009119': 'BSI 1001009119 - Al Qolam',
+  '1001009113': 'BSI 1001009113 - Jumat Berkah Al Qolam',
+  '1001009121': 'BSI 1001009121 - Remaja Masjid Al Qolam',
+  '7270792067': 'BSI 7270792067 - Taawun Al Qolam'
+};
+
+function pgBendumImport(el) {
+  el.innerHTML = '';
+  el.appendChild(mkPh('Upload Mutasi Rekening BSI','Unggah file CSV dari BSI untuk pencatatan transaksi otomatis'));
+
+  // Info
+  var info = document.createElement('div'); info.className='info-box';
+  info.innerHTML = '<b>Cara download:</b> Login BSI Net &rarr; Rekening &rarr; Mutasi &rarr; Download &rarr; CSV. '+
+    'Nomor rekening akan terdeteksi otomatis dari file.';
+  el.appendChild(info);
+
+  // Upload card
+  var card = document.createElement('div'); card.className='card';
+  var ch = document.createElement('div'); ch.className='chead'; ch.textContent='Upload File CSV BSI';
+  var cb = document.createElement('div'); cb.className='cbody';
+
+  var olehWrap = document.createElement('div'); olehWrap.style.marginBottom='14px';
+  olehWrap.appendChild(mkLabel('Dicatat oleh',true));
+  var olehInp = mkInput('imp_oleh','text','Nama pencatat...');
+  if(CU) olehInp.value=CU.name;
+  olehWrap.appendChild(olehInp);
+  cb.appendChild(olehWrap);
+
+  var fileWrap = document.createElement('div'); fileWrap.style.marginBottom='14px';
+  fileWrap.appendChild(mkLabel('File CSV Mutasi BSI',true));
+  var fileInp = document.createElement('input');
+  fileInp.type='file'; fileInp.id='imp_file'; fileInp.accept='.csv';
+  fileInp.style.cssText='display:block;margin-top:6px;font-size:13px';
+  fileInp.onchange = function(){ parseBsiCsv(this); };
+  fileWrap.appendChild(fileInp);
+  cb.appendChild(fileWrap);
+
+  card.appendChild(ch); card.appendChild(cb);
+  el.appendChild(card);
+
+  // Rekening tabs area
+  var tabsArea = document.createElement('div'); tabsArea.id='imp_tabs_area'; tabsArea.style.marginTop='16px';
+  el.appendChild(tabsArea);
+
+  // Preview area
+  var previewDiv = document.createElement('div'); previewDiv.id='imp_preview';
+  el.appendChild(previewDiv);
+}
+
+function parseBsiCsv(input) {
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    var lines = text.split('\n').filter(function(l){ return l.trim(); });
+
+    // Find header row
+    var headerIdx = -1;
+    for(var i=0;i<lines.length;i++){
+      if(lines[i].indexOf('Waktu Transaksi')>=0){ headerIdx=i; break; }
+    }
+    if(headerIdx<0){ toast('Format CSV tidak dikenali. Pastikan file dari BSI Internet Banking.',false); return; }
+
+    // Extract rekening number from header
+    var rekeningNo = '', rekeningName = '';
+    var infoLines = lines.slice(0, headerIdx);
+    var periode = '';
+    infoLines.forEach(function(l){
+      if(l.indexOf('Rekening')>=0 && l.indexOf('IDR')>=0){
+        // Extract nomor rekening
+        var match = l.match(/IDR\s+(\d+)/);
+        if(match) {
+          rekeningNo = match[1];
+          rekeningName = REKENING_MAP[rekeningNo] || ('BSI '+rekeningNo);
+        }
+      }
+      if(l.indexOf('Periode')>=0) periode = l.split(':').slice(1).join(':').replace(/"/g,'').trim();
+    });
+
+    // Parse transactions
+    var dataLines = lines.slice(headerIdx+1);
+    var transactions = [];
+    dataLines.forEach(function(line){
+      if(!line.trim()) return;
+      var cols = parseCsvLine(line);
+      if(cols.length < 9) return;
+      var waktu     = cols[0].replace(/"/g,'').trim();
+      var deskripsi = cols[6].replace(/"/g,'').trim();
+      var debet     = cols[7].replace(/"/g,'').replace(/-/g,'').replace(/,/g,'').trim();
+      var kredit    = cols[8].replace(/"/g,'').replace(/,/g,'').trim();
+      if(!waktu) return;
+      var datePart = waktu.split(' ')[0];
+      var dparts = datePart.split('-');
+      var tgl = dparts.length===3 ? dparts[2]+'-'+dparts[1]+'-'+dparts[0] : datePart;
+      var jenis = kredit && Number(kredit)>0 ? 'pemasukan' : 'pengeluaran';
+      var jumlah = jenis==='pemasukan' ? Number(kredit||0) : Number(debet||0);
+      jumlah = Math.round(jumlah);
+      if(!jumlah) return;
+      transactions.push({ tanggal:tgl, jenis:jenis, keterangan:deskripsi, jumlah:jumlah, selected:true });
+    });
+
+    if(!transactions.length){ toast('Tidak ada transaksi yang bisa dibaca.',false); return; }
+
+    // Store globally
+    window._impTrx = transactions;
+    window._impRekNo = rekeningNo;
+    window._impRekName = rekeningName;
+    window._impPeriode = periode;
+
+    renderImportPreview(transactions, periode, rekeningNo, rekeningName);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseCsvLine(line) {
+  var result=[], cur='', inQ=false;
+  for(var i=0;i<line.length;i++){
+    var ch=line[i];
+    if(ch==='"'){ inQ=!inQ; }
+    else if(ch===','&&!inQ){ result.push(cur); cur=''; }
+    else { cur+=ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function renderImportPreview(transactions, periode, rekeningNo, rekeningName) {
+  var previewDiv = document.getElementById('imp_preview'); if(!previewDiv) return;
+
+  var masuk=0, keluar=0;
+  transactions.forEach(function(t){ if(t.jenis==='pemasukan') masuk+=t.jumlah; else keluar+=t.jumlah; });
+
+  // Rekening info banner
+  var banner = '<div style="background:rgba(10,92,46,.08);border:.5px solid #0a5c2e;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">'+
+    '<span style="font-size:22px">&#127974;</span>'+
+    '<div><div style="font-weight:700;color:#0a5c2e;font-size:14px">'+rekeningName+'</div>'+
+    '<div style="font-size:12px;color:#888">'+periode+'</div></div></div>';
+
+  var html = '<div class="card" style="margin-top:14px">'+
+    '<div class="chead">Preview Transaksi — '+transactions.length+' transaksi</div>'+
+    '<div class="cbody">'+
+    banner+
+    '<div class="sg" style="margin-bottom:14px">'+
+    '<div class="sc"><div class="sl">Total Masuk</div><div class="sv" style="font-size:14px;color:#1a4a8a">'+rp(masuk)+'</div></div>'+
+    '<div class="sc"><div class="sl">Total Keluar</div><div class="sv" style="font-size:14px;color:#c0392b">'+rp(keluar)+'</div></div>'+
+    '<div class="sc"><div class="sl">Dipilih</div><div class="sv" id="imp_count">'+transactions.length+'</div><div class="sss">transaksi</div></div>'+
+    '</div>'+
+    '<div style="margin-bottom:10px;display:flex;gap:8px">'+
+    '<button class="btno" style="font-size:12px;padding:5px 12px" onclick="impSelectAll(true)">Pilih Semua</button>'+
+    '<button class="btno" style="font-size:12px;padding:5px 12px" onclick="impSelectAll(false)">Batal Semua</button>'+
+    '</div>'+
+    '<div style="overflow-x:auto"><table class="tbl">'+
+    '<thead><tr>'+
+    '<th style="width:32px"><input type="checkbox" id="imp_all" checked onchange="impToggleAll(this)"></th>'+
+    '<th>Tanggal</th><th>Jenis</th><th>Keterangan / Deskripsi BSI</th><th>Jumlah</th>'+
+    '</tr></thead><tbody id="imp_tbody">';
+
+  transactions.forEach(function(t,i){
+    html+='<tr>'+
+      '<td><input type="checkbox" class="imp_chk" data-idx="'+i+'" checked onchange="impUpdateCount()"></td>'+
+      '<td><span class="badge bg">'+fS(t.tanggal)+'</span></td>'+
+      '<td><span class="badge '+(t.jenis==='pemasukan'?'bb':'br')+'">'+
+        (t.jenis==='pemasukan'?'Masuk':'Keluar')+'</span></td>'+
+      '<td style="font-size:12px">'+t.keterangan+'</td>'+
+      '<td style="font-weight:700;color:'+(t.jenis==='pemasukan'?'#1a4a8a':'#c0392b')+'">'+rp(t.jumlah)+'</td>'+
+      '</tr>';
+  });
+
+  html+='</tbody></table></div>'+
+    '<div class="act" style="margin-top:14px">'+
+    '<button class="btnp" id="imp_btn" onclick="submitImportBsi()" style="font-size:14px;padding:10px 24px">'+
+    '&#8593; Import ke Rekening: '+rekeningName+'</button>'+
+    '</div></div></div>';
+
+  previewDiv.innerHTML = html;
+}
+
+function impSelectAll(val) {
+  document.querySelectorAll('.imp_chk').forEach(function(cb){ cb.checked=val; });
+  impUpdateCount();
+}
+function impToggleAll(el){ impSelectAll(el.checked); }
+function impUpdateCount() {
+  var n = document.querySelectorAll('.imp_chk:checked').length;
+  var el = document.getElementById('imp_count'); if(el) el.textContent=n;
+}
+
+function submitImportBsi() {
+  var olehInp = document.getElementById('imp_oleh');
+  var olehVal = olehInp ? olehInp.value.trim() : (CU?CU.name:'');
+  var rekVal  = window._impRekName || '';
+  var trx     = window._impTrx || [];
+
+  if(!rekVal){ toast('Rekening tidak terdeteksi dari file CSV!',false); return; }
+
+  var selected = [];
+  document.querySelectorAll('.imp_chk:checked').forEach(function(cb){
+    var idx=parseInt(cb.getAttribute('data-idx'));
+    if(!isNaN(idx)&&trx[idx]) selected.push(trx[idx]);
+  });
+  if(!selected.length){ toast('Pilih minimal 1 transaksi!',false); return; }
+
+  var btn=document.getElementById('imp_btn');
+  if(btn){ btn.disabled=true; btn.textContent='Mengimport... (0/'+selected.length+')'; }
+
+  var idx=0;
+  function next(){
+    if(idx>=selected.length){
+      toast('Import selesai! '+selected.length+' transaksi masuk ke '+rekVal,true);
+      if(btn){ btn.disabled=false; btn.textContent='Import ke Rekening: '+rekVal; }
+      // Reload laporan
+      return;
+    }
+    var t=selected[idx];
+    gasCall('saveKeuangan',[{
+      tanggal:t.tanggal, jenis:t.jenis,
+      kategori:'Import BSI', keterangan:t.keterangan,
+      rekening:rekVal, jumlah:t.jumlah, dicatat_oleh:olehVal
+    }],function(){
+      idx++;
+      if(btn) btn.textContent='Mengimport... ('+idx+'/'+selected.length+')';
+      next();
+    },function(){ idx++; next(); });
+  }
+  next();
+}
+
+
 // ================================================================
 //  HAPUS DATA (ADMIN)
 // ================================================================
@@ -2102,7 +2334,7 @@ function refreshPage() {
     ruangan: [pgRuanganSub,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
-    bendum:  [pgBendumSub,pgBendumLap,pgRuanganJadwal],
+    bendum:  [pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
   var fns = roleFnMap[role] || [];
