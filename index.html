@@ -217,7 +217,8 @@ var USERS_OFF = {
   lppdi:   {pw:'ceramah2026',    name:'LPPDI',    role:'ruangan'},
   le:      {pw:'cuan2026',       name:'LE',       role:'ruangan'},
   admin:   {pw:'monitor@2026',   name:'Admin',    role:'admin'},
-  bendum:  {pw:'cairindonk@2026',name:'Bendum',   role:'bendum'}
+  bendum:  {pw:'cairindonk@2026',name:'Bendum',   role:'bendum'},
+  staff:   {pw:'amanah2026',     name:'Staff',    role:'staff'}
 };
 
 var BADAR_PAGI_IT = ["Menyapu dan mengepel area masjid", "Membersihkan karpet", "Membersihkan tempat wudhu dan toilet", "Merapikan sandal", "Mengecek sound system", "Menyiapkan masjid untuk kegiatan pagi dan sholat dhuhur", "Membersihkan Tempat Wudlu A", "Membersihkan Tempat Wudlu B", "Membersihkan Kamar Mandi Ikhwan", "Membersihkan Kamar Mandi Akhwat"];
@@ -385,6 +386,7 @@ function renderApp(){
   else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
+  else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
@@ -2450,6 +2452,24 @@ function parseBsiPdfText(text) {
 }
 
 
+
+// ================================================================
+//  STAFF - Pemesanan Ruangan (monitor + eksekusi OK/Batal/Hapus)
+// ================================================================
+
+function pgStaffRuangan(el) {
+  el.innerHTML = '';
+  el.appendChild(mkPh('Pemesanan Ruangan','Kelola status pemesanan ruangan masjid'));
+
+  var info = document.createElement('div'); info.className='info-box';
+  info.innerHTML = '<b>Hak akses Staff:</b> Dapat mengkonfirmasi (OK), membatalkan, dan menghapus pemesanan ruangan. Tidak dapat menambah pemesanan baru.';
+  el.appendChild(info);
+
+  var tblArea = document.createElement('div'); tblArea.id='admin_rng_area';
+  el.appendChild(tblArea);
+  renderJadwal(tblArea, true);
+}
+
 // ================================================================
 //  HAPUS DATA (ADMIN)
 // ================================================================
@@ -2489,7 +2509,9 @@ function refreshPage() {
     sarpras: [pgSarprasSub,pgSarprasMon,pgRuanganJadwal],
     ruangan: [pgRuanganSub,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
+    staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
+    staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     bendum:  [pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
