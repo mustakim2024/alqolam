@@ -2766,123 +2766,201 @@ function konfirmasiKuitansi(encoded) {
 }
 
 function generateKuitansiPdf(d) {
-  // Generate HTML kuitansi then print/save as PDF
-  var nominalFmt = 'Rp ' + Number(d.nominal).toLocaleString('id-ID') + ',-';
+  var nomFmt = 'Rp ' + Number(d.nominal).toLocaleString('id-ID') + ',-';
 
-  var html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">'+
-    '<title>Kuitansi '+d.nomor+'</title>'+
-    '<style>'+
-    '@page{size:A5 landscape;margin:8mm}'+
-    '*{box-sizing:border-box;margin:0;padding:0}'+
-    'body{font-family:"Times New Roman",serif;background:#fff;color:#000;font-size:12px}'+
-    '.kuitansi{border:2px solid #8B6914;border-radius:4px;padding:0;width:100%;min-height:190mm;position:relative;overflow:hidden}'+
-    '.top-bar{background:linear-gradient(135deg,#0a5c2e,#1a8a4a);height:8px}'+
-    '.bot-bar{background:linear-gradient(135deg,#0a5c2e,#1a8a4a);height:8px;position:absolute;bottom:0;left:0;right:0}'+
-    '.inner{padding:10px 16px 20px}'+
-    '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #c9981a;padding-bottom:8px;margin-bottom:10px}'+
-    '.logo-area{display:flex;align-items:center;gap:10px}'+
-    '.logo-circle{width:55px;height:55px;border:2px solid #0a5c2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#0a5c2e;text-align:center;line-height:1.2}'+
-    '.org-name{text-align:center;flex:1}'+
-    '.org-name h1{font-size:22px;font-weight:900;color:#0a5c2e;letter-spacing:2px}'+
-    '.org-name p{font-size:10px;color:#555}'+
-    '.kuit-title{text-align:center;flex:1}'+
-    '.kuit-title h2{font-size:20px;font-weight:900;color:#8B6914;letter-spacing:4px}'+
-    '.nomor-box{text-align:right;font-size:10px}'+
-    '.nomor-badge{border:1px solid #8B6914;padding:3px 10px;font-size:11px;font-weight:700;display:inline-block;margin-top:4px}'+
-    '.fields{margin:8px 0}'+
-    '.field-row{display:flex;align-items:baseline;margin-bottom:8px;border-bottom:1px dotted #ccc;padding-bottom:4px}'+
-    '.field-label{width:140px;font-size:11px;flex-shrink:0;color:#333}'+
-    '.field-colon{width:12px;text-align:center;flex-shrink:0}'+
-    '.field-value{flex:1;font-size:12px;font-weight:700;min-height:16px}'+
-    '.tgl-row{display:flex;justify-content:flex-end;font-size:11px;margin-bottom:6px}'+
-    '.bottom-area{display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px}'+
-    '.nominal-box{border:2px solid #0a5c2e;border-radius:6px;padding:6px 16px;background:#f0f9f0}'+
-    '.nominal-box .rp-label{font-size:10px;color:#555;font-weight:700}'+
-    '.nominal-box .rp-value{font-size:20px;font-weight:900;color:#0a5c2e}'+
-    '.ttd-area{text-align:center;min-width:140px}'+
-    '.ttd-name{font-size:11px;font-weight:700;margin-top:4px}'+
-    '.ttd-line{border-bottom:1px solid #000;width:120px;margin:0 auto;margin-top:2px}'+
-    '.donatur-area{text-align:center;min-width:120px}'+
-    '.keterangan-box{font-size:8.5px;color:#666;margin-top:8px;border-top:1px solid #eee;padding-top:4px;font-style:italic}'+
-    '.ornament{color:#c9981a;font-size:14px}'+
-    '</style></head><body>'+
-    '<div class="kuitansi">'+
-    '<div class="top-bar"></div>'+
-    '<div class="inner">'+
+  // SVG logo DKM (circular emblem - Al Qolam IQRO)
+  var logoSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="90" height="90">' +
+    '<circle cx="60" cy="60" r="58" fill="none" stroke="#2e4a1a" stroke-width="3"/>' +
+    '<circle cx="60" cy="60" r="52" fill="none" stroke="#c9981a" stroke-width="1.5"/>' +
+    '<text x="60" y="22" text-anchor="middle" font-family="serif" font-size="9" font-weight="700" fill="#2e4a1a" letter-spacing="3">MASJID AL-QOLAM</text>' +
+    '<circle cx="60" cy="52" r="22" fill="none" stroke="#2e4a1a" stroke-width="1.5"/>' +
+    '<ellipse cx="60" cy="52" rx="22" ry="12" fill="none" stroke="#2e4a1a" stroke-width="1"/>' +
+    '<line x1="38" y1="52" x2="82" y2="52" stroke="#2e4a1a" stroke-width="1"/>' +
+    '<line x1="60" y1="30" x2="60" y2="74" stroke="#2e4a1a" stroke-width="1"/>' +
+    '<circle cx="60" cy="52" r="4" fill="#c9981a"/>' +
+    '<line x1="60" y1="32" x2="63" y2="44" stroke="#c9981a" stroke-width="2"/>' +
+    '<text x="60" y="82" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="900" fill="#1a6b2a" letter-spacing="1">IQRO\'</text>' +
+    '<path d="M35 88 Q60 95 85 88" fill="none" stroke="#2e4a1a" stroke-width="2"/>' +
+    '<path d="M38 90 Q60 100 82 90" fill="none" stroke="#2e4a1a" stroke-width="1"/>' +
+    '</svg>';
 
-    // HEADER
-    '<div class="header">'+
-    '<div class="logo-area">'+
-    '<div class="logo-circle">MASJID<br>AL-QOLAM<br>IQRO\'</div>'+
-    '</div>'+
-    '<div class="kuit-title">'+
-    '<span class="ornament">✦ </span><h2>KUITANSI</h2><span class="ornament"> ✦</span>'+
-    '<div style="font-size:10px;color:#0a5c2e;margin-top:2px">ALQOLAM &nbsp;|&nbsp; Masjid AlQOlam &nbsp;|&nbsp; Yayasan IQRO\' Bekasi</div>'+
-    '</div>'+
-    '<div class="nomor-box">'+
-    '<div>No.</div>'+
-    '<div class="nomor-badge">'+d.nomor+'</div>'+
-    '</div>'+
-    '</div>'+
+  // SVG stempel biru
+  var stempelSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 130" width="90" height="90">' +
+    '<circle cx="65" cy="65" r="62" fill="none" stroke="#1a4a8a" stroke-width="4"/>' +
+    '<circle cx="65" cy="65" r="55" fill="none" stroke="#1a4a8a" stroke-width="1.5"/>' +
+    '<circle cx="65" cy="65" r="50" fill="rgba(26,74,138,0.04)"/>' +
+    '<text x="65" y="24" text-anchor="middle" font-family="serif" font-size="9" font-weight="700" fill="#1a4a8a" letter-spacing="2">MASJID  AL-QOLAM</text>' +
+    '<circle cx="65" cy="58" r="24" fill="none" stroke="#1a4a8a" stroke-width="1.5"/>' +
+    '<ellipse cx="65" cy="58" rx="24" ry="14" fill="none" stroke="#1a4a8a" stroke-width="1"/>' +
+    '<line x1="41" y1="58" x2="89" y2="58" stroke="#1a4a8a" stroke-width="1"/>' +
+    '<line x1="65" y1="34" x2="65" y2="82" stroke="#1a4a8a" stroke-width="1"/>' +
+    '<circle cx="65" cy="58" r="4" fill="#1a4a8a"/>' +
+    '<line x1="65" y1="36" x2="68" y2="50" stroke="#1a4a8a" stroke-width="2"/>' +
+    '<text x="65" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="900" fill="#1a4a8a">IQRO\'</text>' +
+    '<path d="M40 96 Q65 104 90 96" fill="none" stroke="#1a4a8a" stroke-width="2"/>' +
+    '</svg>';
+
+  // SVG silhouette masjid (simplified)
+  var masjidSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140" width="220" height="140" opacity="0.18">' +
+    // main building
+    '<rect x="30" y="70" width="160" height="65" fill="#2e4a1a"/>' +
+    // center dome
+    '<ellipse cx="110" cy="68" rx="28" ry="22" fill="#2e4a1a"/>' +
+    '<rect x="94" y="60" width="32" height="20" fill="#2e4a1a"/>' +
+    // left small dome
+    '<ellipse cx="65" cy="76" rx="16" ry="13" fill="#2e4a1a"/>' +
+    '<rect x="54" y="69" width="22" height="12" fill="#2e4a1a"/>' +
+    // right small dome
+    '<ellipse cx="155" cy="76" rx="16" ry="13" fill="#2e4a1a"/>' +
+    '<rect x="144" y="69" width="22" height="12" fill="#2e4a1a"/>' +
+    // minarets
+    '<rect x="18" y="40" width="10" height="95" fill="#2e4a1a"/>' +
+    '<ellipse cx="23" cy="38" rx="7" ry="12" fill="#2e4a1a"/>' +
+    '<rect x="192" y="40" width="10" height="95" fill="#2e4a1a"/>' +
+    '<ellipse cx="197" cy="38" rx="7" ry="12" fill="#2e4a1a"/>' +
+    // windows
+    '<rect x="45" y="95" width="18" height="25" rx="9" fill="#f0e8c8"/>' +
+    '<rect x="80" y="95" width="18" height="25" rx="9" fill="#f0e8c8"/>' +
+    '<rect x="122" y="95" width="18" height="25" rx="9" fill="#f0e8c8"/>' +
+    '<rect x="157" y="95" width="18" height="25" rx="9" fill="#f0e8c8"/>' +
+    // center door
+    '<rect x="97" y="100" width="26" height="35" rx="13" fill="#f0e8c8"/>' +
+    // crescent on top dome
+    '<text x="107" y="54" font-size="16" fill="#c9981a">&#9790;</text>' +
+    '</svg>';
+
+  // Ornament border SVG pattern
+  var borderTop = '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="12" viewBox="0 0 800 12">' +
+    '<rect width="800" height="12" fill="#2e4a1a"/>' +
+    '</svg>';
+
+  var html = '<!DOCTYPE html><html lang="id"><head>' +
+    '<meta charset="UTF-8">' +
+    '<title>Kuitansi ' + d.nomor + '</title>' +
+    '<style>' +
+    '@page{size:A5 landscape;margin:6mm}' +
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:"Times New Roman",Georgia,serif;background:#f5f0e0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:4mm}' +
+    '.wrap{width:100%;max-width:190mm;background:#f8f3e3;border:3px solid #8B6914;border-radius:3px;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.2)}' +
+    '.topbar{background:#2e4a1a;height:10px;width:100%}' +
+    '.botbar{background:#2e4a1a;height:10px;width:100%;position:absolute;bottom:0;left:0}' +
+    // Corner ornaments
+    '.orn{position:absolute;color:#c9981a;font-size:22px;line-height:1}' +
+    '.orn-tl{top:12px;left:10px}.orn-tr{top:12px;right:10px}.orn-bl{bottom:12px;left:10px}.orn-br{bottom:12px;right:10px}' +
+    // outer gold border line
+    '.gold-border{position:absolute;top:14px;left:8px;right:8px;bottom:14px;border:1.5px solid #c9981a;pointer-events:none}' +
+    '.inner{padding:10px 18px 22px;position:relative}' +
+    // Header
+    '.hdr{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:8px;border-bottom:1.5px solid #c9981a;margin-bottom:8px}' +
+    '.logo-wrap{width:80px;flex-shrink:0}' +
+    '.center-hdr{flex:1;text-align:center;padding:0 10px}' +
+    '.kuit-title{font-size:26px;font-weight:900;color:#2e4a1a;letter-spacing:3px;font-family:Georgia,serif}' +
+    '.kuit-ornament{color:#c9981a;font-size:16px}' +
+    '.org-name{font-size:20px;font-weight:900;letter-spacing:2px;color:#2e4a1a;margin-top:2px}' +
+    '.org-sub{font-size:10px;color:#555;line-height:1.5}' +
+    '.nomor-area{text-align:right;min-width:100px}' +
+    '.nomor-label{font-size:10px;color:#333;margin-bottom:2px}' +
+    '.nomor-box{display:inline-flex;align-items:center;border:1.5px solid #2e4a1a;padding:2px 0;font-size:11px;font-weight:700}' +
+    '.nomor-no{background:#2e4a1a;color:#fff;padding:2px 6px;font-size:10px}' +
+    '.nomor-val{padding:2px 10px;letter-spacing:1px}' +
+    '.tgl-row{text-align:right;font-size:11px;margin-bottom:8px;color:#333}' +
+    // Fields
+    '.fields{margin:4px 0}' +
+    '.frow{display:flex;align-items:flex-start;margin-bottom:7px;border-bottom:1px dotted #b8a87a;padding-bottom:4px}' +
+    '.flabel{width:130px;flex-shrink:0;font-size:11.5px;color:#333;padding-top:1px}' +
+    '.fcolon{width:14px;flex-shrink:0;text-align:center;padding-top:1px}' +
+    '.fval{flex:1;font-size:12px;font-weight:700;min-height:16px;padding-left:4px}' +
+    // Bottom
+    '.bottom{display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px;position:relative}' +
+    '.nom-box{border:2px solid #2e4a1a;border-radius:4px;overflow:hidden;display:inline-flex;align-items:center}' +
+    '.nom-rp{background:#2e4a1a;color:#fff;font-size:11px;font-weight:700;padding:4px 8px}' +
+    '.nom-val{font-size:20px;font-weight:900;padding:4px 14px;color:#2e4a1a;letter-spacing:1px}' +
+    '.keterangan-kecil{font-size:8px;color:#666;font-style:italic;margin-top:5px;max-width:180px;line-height:1.4}' +
+    '.ttd-col{text-align:center;min-width:110px}' +
+    '.ttd-label{font-size:10px;color:#555;margin-bottom:18px}' +
+    '.ttd-name{font-size:11px;font-weight:700;margin-top:4px}' +
+    '.ttd-line{border-bottom:1px solid #333;width:100px;margin:0 auto}' +
+    '.ttd-bracket{font-size:9px;color:#555;margin-top:2px}' +
+    '.masjid-wrap{position:absolute;right:155px;bottom:-2px;opacity:1}' +
+    '</style></head><body>' +
+    '<div class="wrap">' +
+    '<div class="topbar"></div>' +
+    '<div class="gold-border"></div>' +
+    '<div class="orn orn-tl">❖</div>' +
+    '<div class="orn orn-tr">❖</div>' +
+    '<div class="orn orn-bl">❖</div>' +
+    '<div class="orn orn-br">❖</div>' +
+
+    '<div class="inner">' +
+
+    // HEADER ROW
+    '<div class="hdr">' +
+    '<div class="logo-wrap">' + logoSvg + '</div>' +
+    '<div class="center-hdr">' +
+    '<div class="kuit-ornament">✦ &nbsp;</div>' +
+    '<span class="kuit-title">KUITANSI</span>' +
+    '<span class="kuit-ornament"> &nbsp; ✦</span>' +
+    '<div class="org-name">ALQOLAM</div>' +
+    '<div class="org-sub">Masjid AlQOlam<br>Yayasan IQRO\' Bekasi</div>' +
+    '<div style="color:#c9981a;font-size:10px;margin-top:2px">❖ ─────── ❖</div>' +
+    '</div>' +
+    '<div class="nomor-area">' +
+    '<div class="nomor-label">No.</div>' +
+    '<div class="nomor-box"><span class="nomor-no">No.</span><span class="nomor-val">' + d.nomor + '</span></div>' +
+    '</div>' +
+    '</div>' +
 
     // TANGGAL
-    '<div class="tgl-row">Tanggal : '+d.tglFormatted+'</div>'+
+    '<div class="tgl-row">Tanggal : ' + d.tglFormatted + '</div>' +
 
     // FIELDS
-    '<div class="fields">'+
-    '<div class="field-row"><span class="field-label">Telah Terima Dari</span><span class="field-colon">:</span><span class="field-value">'+d.nama+'</span></div>'+
-    '<div class="field-row"><span class="field-label">Uang Sejumlah</span><span class="field-colon">:</span><span class="field-value" style="font-style:italic;text-transform:capitalize">'+d.terbilang+'</span></div>'+
-    '<div class="field-row"><span class="field-label">Untuk Pembayaran</span><span class="field-colon">:</span><span class="field-value">'+d.keterangan+'</span></div>'+
-    '</div>'+
+    '<div class="fields">' +
+    '<div class="frow"><span class="flabel">Telah Terima Dari</span><span class="fcolon">:</span><span class="fval">' + d.nama + '</span></div>' +
+    '<div class="frow"><span class="flabel">Uang Sejumlah</span><span class="fcolon">:</span><span class="fval" style="font-style:italic;text-transform:capitalize">' + d.terbilang + '</span></div>' +
+    '<div class="frow" style="min-height:36px"><span class="flabel">Untuk Pembayaran</span><span class="fcolon">:</span><span class="fval">' + d.keterangan + '</span></div>' +
+    '</div>' +
 
-    // BOTTOM
-    '<div class="bottom-area">'+
-    '<div>'+
-    '<div class="nominal-box">'+
-    '<div class="rp-label">Rp.</div>'+
-    '<div class="rp-value">'+Number(d.nominal).toLocaleString('id-ID')+',-</div>'+
-    '</div>'+
-    '<div class="keterangan-box">Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.<br>Dokumen dinyatakan valid setelah tercatat di rekening lembaga.</div>'+
-    '</div>'+
+    // BOTTOM AREA
+    '<div class="bottom">' +
 
-    '<div class="ttd-area">'+
-    '<div style="font-size:10px;color:#555;margin-bottom:24px">Penerima,</div>'+
-    '<div style="margin-bottom:6px;font-size:10px">Masjid Al Qolam</div>'+
-    '<div class="ttd-name">Joko Purwanto</div>'+
-    '<div class="ttd-line"></div>'+
-    '<div style="font-size:9px;color:#888;margin-top:2px">( Joko Purwanto )</div>'+
-    '</div>'+
+    // LEFT: nominal box + keterangan kecil
+    '<div>' +
+    '<div class="nom-box"><span class="nom-rp">Rp.</span><span class="nom-val">' + Number(d.nominal).toLocaleString('id-ID') + ',-</span></div>' +
+    '<div class="keterangan-kecil"><i>Keterangan :</i><br>Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.<br>Dokumen dinyatakan valid setelah tercatat di rekening lembaga.</div>' +
+    '</div>' +
 
-    '<div class="donatur-area">'+
-    '<div style="font-size:10px;color:#555;margin-bottom:24px">Yang Menyerahkan,</div>'+
-    '<div style="height:30px"></div>'+
-    '<div class="ttd-line"></div>'+
-    '<div style="font-size:9px;color:#555;margin-top:2px">( '+d.nama+' )</div>'+
-    '</div>'+
-    '</div>'+
+    // SILHOUETTE masjid (center)
+    '<div class="masjid-wrap">' + masjidSvg + '</div>' +
 
-    '</div>'+
-    '<div class="bot-bar"></div>'+
-    '</div>'+
+    // CENTER: Penerima + stempel
+    '<div class="ttd-col" style="min-width:130px">' +
+    '<div class="ttd-label">Penerima,</div>' +
+    stempelSvg +
+    '<div class="ttd-name">Joko Purwanto</div>' +
+    '<div class="ttd-line"></div>' +
+    '<div class="ttd-bracket">( Joko Purwanto )</div>' +
+    '</div>' +
+
+    // RIGHT: Yang Menyerahkan
+    '<div class="ttd-col">' +
+    '<div class="ttd-label">Yang Menyerahkan,</div>' +
+    '<div style="height:72px"></div>' +
+    '<div class="ttd-line"></div>' +
+    '<div class="ttd-bracket">( ' + d.nama + ' )</div>' +
+    '</div>' +
+
+    '</div>' + // end bottom
+    '</div>' + // end inner
+    '<div class="botbar"></div>' +
+    '</div>' + // end wrap
     '</body></html>';
 
-  // Open in new window and trigger print
-  var win = window.open('','_blank','width=800,height=600');
+  var win = window.open('', '_blank', 'width=900,height=650');
+  if (!win) { toast('Popup diblokir browser. Izinkan popup untuk halaman ini.', false); return; }
   win.document.write(html);
   win.document.close();
-  win.onload = function() {
-    setTimeout(function(){
-      win.print();
-    }, 500);
-  };
+  win.onload = function() { setTimeout(function(){ win.print(); }, 600); };
 }
-
-
-
-// ================================================================
-//  SORTABLE TABLE HELPER
-// ================================================================
-var _sortState = {};
 
 function sortTable(tbodyId, col, type) {
   var tbody = document.getElementById(tbodyId);
