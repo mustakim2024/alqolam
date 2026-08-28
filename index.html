@@ -2602,13 +2602,32 @@ function pgBendumPemasukan(el) {
   // NOMINAL
   var nomWrap = document.createElement('div'); nomWrap.style.marginBottom='14px';
   nomWrap.appendChild(mkLabel('Nominal Diterima (Rp)',true));
-  var nomInp = mkInput('kuit_nominal','number','0');
-  nomInp.min = '0';
-  nomInp.style.cssText = 'width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px';
+  var nomInp = document.createElement('input');
+  nomInp.type = 'text';
+  nomInp.id   = 'kuit_nominal';
+  nomInp.placeholder = '0';
+  nomInp.inputMode = 'numeric';
+  nomInp.style.cssText = 'width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:.5px';
   nomInp.oninput = function() {
-    var v = parseInt(this.value)||0;
+    var raw = this.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+    var num = parseInt(raw)||0;
+    // Format dengan titik ribuan
+    this.value = num > 0 ? num.toLocaleString('id-ID') : '';
+    // Store raw numeric value as data attribute
+    this.setAttribute('data-num', num);
     var tbEl = document.getElementById('kuit_terbilang_preview');
-    if(tbEl) tbEl.textContent = v > 0 ? terbilang(v) : '';
+    if(tbEl) tbEl.textContent = num > 0 ? terbilang(num) : '';
+  };
+  nomInp.onkeydown = function(e) {
+    // Allow: backspace, delete, tab, escape, arrows, home, end
+    var allowed = [8,9,27,35,36,37,38,39,40,46];
+    if(allowed.indexOf(e.keyCode) >= 0) return;
+    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+    if(e.ctrlKey && [65,67,86,88].indexOf(e.keyCode) >= 0) return;
+    // Only allow digits
+    if((e.shiftKey || e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+      e.preventDefault();
+    }
   };
   nomWrap.appendChild(nomInp);
   var tbPrev = document.createElement('div');
@@ -2657,7 +2676,8 @@ function pratinjauKuitansi() {
   var rek    = v('kuit_rekening');
   var tgl    = v('kuit_tanggal');
   var nama   = v('kuit_nama');
-  var nom    = parseInt(document.getElementById('kuit_nominal').value)||0;
+  var nomEl  = document.getElementById('kuit_nominal');
+  var nom    = parseInt(nomEl ? nomEl.getAttribute('data-num') : '0')||0;
   var ket    = v('kuit_keterangan');
   var oleh   = v('kuit_oleh');
 
