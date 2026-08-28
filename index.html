@@ -142,6 +142,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 .btn-confirm:hover{background:#0a5c2e;color:#fff}.btn-unconfirm:hover{background:#c9981a;color:#fff}
 @media(max-width:600px){.fg2,.clgrid{grid-template-columns:1fr}.appmain{padding:14px}.smg{grid-template-columns:1fr}.lbox{padding:32px 20px}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -2878,11 +2879,46 @@ function generateKuitansiPdf(d) {
     '<div class="botbar"></div>' +
     '</div></body></html>';
 
-  var win = window.open('', '_blank', 'width=950,height=680');
-  if (!win) { toast('Popup diblokir browser. Izinkan popup untuk halaman ini.', false); return; }
-  win.document.write(html);
-  win.document.close();
-  win.onload = function() { setTimeout(function(){ win.print(); }, 700); };
+  // Create hidden iframe, render HTML, convert to PDF blob, auto-download
+  var filename = 'Kuitansi_' + d.nomor.replace(/\//g,'-') + '.pdf';
+
+  // Create temp container
+  var container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:210mm;background:#fff;z-index:-1';
+  container.innerHTML = html
+    .replace('<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Kuitansi ' + d.nomor + '</title><style>', '')
+    .replace(/^[\s\S]*?<body>/, '')
+    .replace(/<\/body><\/html>$/, '');
+
+  // Parse just the body content
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(html, 'text/html');
+  var bodyContent = doc.body;
+
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'width:257mm;height:182mm;overflow:hidden;background:#fff;font-family:Times New Roman,serif';
+  while (bodyContent.firstChild) {
+    wrapper.appendChild(bodyContent.firstChild);
+  }
+  document.body.appendChild(wrapper);
+
+  toast('Membuat PDF... harap tunggu', true);
+
+  var opt = {
+    margin: 0,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#fff', logging: false },
+    jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
+  };
+
+  html2pdf().set(opt).from(wrapper).save().then(function() {
+    document.body.removeChild(wrapper);
+    toast('Kuitansi ' + d.nomor + ' berhasil diunduh!', true);
+  }).catch(function(err) {
+    document.body.removeChild(wrapper);
+    toast('Gagal buat PDF: ' + err, false);
+  });
 }
 
 function sortTable(tbodyId, col, type) {
