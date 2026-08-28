@@ -2806,218 +2806,215 @@ function konfirmasiKuitansi(encoded) {
 }
 
 function generateKuitansiPdf(d) {
-  var filename  = 'Kuitansi_' + d.nomor.replace(/\//g, '-') + '.pdf';
-  var qrUrl = 'https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=' +
-    encodeURIComponent('https://alqolam.online?ref=' + d.nomor) + '&choe=UTF-8&chld=M|1';
+  var filename = 'Kuitansi_' + d.nomor.replace(/\//g, '-') + '.pdf';
 
   if (typeof html2pdf === 'undefined') {
-    toast('Library PDF belum siap, coba lagi dalam 3 detik...', false); return;
+    toast('Library PDF belum siap, coba lagi...', false); return;
   }
 
-  toast('Membuat PDF kuitansi...', true);
-
-  // Build element, attach to DOM visibly first (html2pdf needs visible element)
+  // Overlay loading
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;display:flex;align-items:center;justify-content:center';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;' +
+    'background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:center;justify-content:center';
   var msg = document.createElement('div');
-  msg.style.cssText = 'background:#fff;padding:20px 30px;border-radius:8px;font-size:14px;color:#0a5c2e;font-weight:700';
-  msg.textContent = 'Membuat kuitansi PDF...';
+  msg.style.cssText = 'background:#fff;padding:18px 28px;border-radius:8px;' +
+    'font-size:14px;color:#0a5c2e;font-weight:700;text-align:center';
+  msg.innerHTML = 'Membuat kuitansi PDF...<br><small style="font-weight:400;color:#888">Harap tunggu</small>';
   overlay.appendChild(msg);
   document.body.appendChild(overlay);
 
-  var el = buildKuitansiEl(d, qrUrl);
-  // Must be visible and on-screen for html2pdf to capture
+  // Build kuitansi element - visible on screen for html2pdf
+  var el = buildKuitansiEl(d);
   el.style.position = 'fixed';
   el.style.top = '0';
   el.style.left = '0';
   el.style.zIndex = '9997';
-  el.style.width = '257mm';
   document.body.appendChild(el);
 
-  // Wait for QR image to load before capturing
-  var qrImg = el.querySelector('img');
-  function proceed() {
-    setTimeout(function() {
-      html2pdf().set({
-        margin: 0,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.97 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: el.offsetWidth,
-          height: el.offsetHeight
-        },
-        jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
-      }).from(el).save().then(function() {
-        document.body.removeChild(el);
-        document.body.removeChild(overlay);
-        toast('Kuitansi ' + d.nomor + ' berhasil diunduh!', true);
-      }).catch(function(err) {
-        if (document.body.contains(el)) document.body.removeChild(el);
-        if (document.body.contains(overlay)) document.body.removeChild(overlay);
-        toast('Gagal: ' + String(err), false);
-      });
-    }, 800);
-  }
-
-  if (qrImg) {
-    if (qrImg.complete) { proceed(); }
-    else { qrImg.onload = proceed; qrImg.onerror = proceed; }
-  } else {
-    proceed();
-  }
+  setTimeout(function() {
+    html2pdf().set({
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.97 },
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794,
+        height: 559,
+        windowWidth: 794,
+        windowHeight: 559,
+        scrollX: 0,
+        scrollY: 0
+      },
+      jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
+    }).from(el).save().then(function() {
+      document.body.removeChild(el);
+      document.body.removeChild(overlay);
+      toast('Kuitansi ' + d.nomor + ' berhasil diunduh!', true);
+    }).catch(function(err) {
+      if (document.body.contains(el)) document.body.removeChild(el);
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      toast('Gagal: ' + String(err), false);
+    });
+  }, 500);
 }
 
-function buildKuitansiEl(d, qrUrl) {
-  var s = function(el, css) { el.style.cssText = css; return el; };
-  var d_ = function(tag) { return document.createElement(tag); };
-  var t  = function(el, txt) { el.textContent = txt; return el; };
+function buildKuitansiEl(d) {
+  var mk = function(tag) { return document.createElement(tag); };
+  var st = function(el, css) { el.style.cssText = css; return el; };
+  var tx = function(el, txt) { el.textContent = txt; return el; };
 
-  var wrap = s(d_('div'), [
-    'width:257mm',
-    'min-height:178mm',
-    'background:#fff',
+  // ROOT — ukuran A5 landscape: 210mm x 148mm
+  // A5 landscape: 210x148mm = 794x559px at 96dpi
+  var wrap = st(mk('div'), [
+    'width:794px',
+    'height:559px',
+    'background:#ffffff',
     'font-family:"Times New Roman",Georgia,serif',
     'color:#111',
     'box-sizing:border-box',
-    'border:2.5px solid #8B6914',
-    'position:relative'
+    'border:2px solid #8B6914',
+    'position:relative',
+    'overflow:hidden',
+    'display:block'
   ].join(';'));
 
   // Top green bar
-  wrap.appendChild(s(d_('div'), 'background:#2e4a1a;height:10px'));
+  wrap.appendChild(st(mk('div'), 'background:#2e4a1a;height:10px;width:100%'));
   // Gold line
-  wrap.appendChild(s(d_('div'), 'border-bottom:1.5px solid #c9981a;margin:4px 9px 0'));
+  wrap.appendChild(st(mk('div'), 'border-bottom:1px solid #c9981a;margin:3px 8px 0'));
 
-  // Corner ornaments
-  function orn(css) {
-    var o = s(d_('div'), 'position:absolute;color:#c9981a;font-size:18px;line-height:1;' + css);
-    o.textContent = '\u2756'; wrap.appendChild(o); return o;
+  // Corner ornaments ❖
+  function orn(topVal, bottomVal, leftVal, rightVal) {
+    var o = mk('div');
+    o.textContent = '\u2756';
+    var css = 'position:absolute;color:#c9981a;font-size:15px;line-height:1;';
+    if (topVal    !== null) css += 'top:'    + topVal    + 'px;';
+    if (bottomVal !== null) css += 'bottom:' + bottomVal + 'px;';
+    if (leftVal   !== null) css += 'left:'   + leftVal   + 'px;';
+    if (rightVal  !== null) css += 'right:'  + rightVal  + 'px;';
+    o.style.cssText = css;
+    wrap.appendChild(o);
   }
-  orn('top:14px;left:10px');
-  orn('top:14px;right:10px');
-  orn('bottom:13px;left:10px');
-  orn('bottom:13px;right:10px');
+  orn(11,null,8,null);
+  orn(11,null,null,8);
+  orn(null,11,8,null);
+  orn(null,11,null,8);
 
-  // INNER
-  var inn = s(d_('div'), 'padding:8px 22px 16px');
+  // INNER padding area
+  var inn = st(mk('div'), 'padding:6px 20px 10px');
   wrap.appendChild(inn);
 
   // ---- HEADER ----
-  var hdr = s(d_('div'), [
+  var hdr = st(mk('div'), [
     'display:flex',
     'align-items:center',
     'justify-content:space-between',
-    'border-bottom:1.5px solid #c9981a',
-    'padding-bottom:9px',
-    'margin-bottom:8px'
+    'border-bottom:1px solid #c9981a',
+    'padding-bottom:6px',
+    'margin-bottom:5px'
   ].join(';'));
 
-  // Left: org info
-  var orgDiv = s(d_('div'), 'min-width:120px');
+  // Left: org name
+  var orgDiv = st(mk('div'), 'min-width:100px');
   orgDiv.innerHTML =
-    '<div style="font-size:11px;color:#555;margin-bottom:2px">Masjid AlQOlam</div>' +
-    '<div style="font-size:9px;color:#888">Yayasan IQRO\' Bekasi</div>';
+    '<div style="font-size:10px;color:#555">Masjid AlQOlam</div>' +
+    '<div style="font-size:8.5px;color:#888">Yayasan IQRO\' Bekasi</div>';
   hdr.appendChild(orgDiv);
 
-  // Center: KUITANSI title
-  var ctrDiv = s(d_('div'), 'flex:1;text-align:center;padding:0 8px');
+  // Center: big title
+  var ctrDiv = st(mk('div'), 'flex:1;text-align:center;padding:0 6px');
   ctrDiv.innerHTML =
-    '<div style="color:#c9981a;font-size:13px">' +
-      '<span>\u2756</span>&nbsp;<span style="font-size:30px;font-weight:900;color:#2e4a1a;' +
-      'letter-spacing:5px;font-family:Georgia,serif">KUITANSI</span>&nbsp;<span>\u2756</span>' +
+    '<div>' +
+      '<span style="color:#c9981a;font-size:12px">\u2756 &nbsp;</span>' +
+      '<span style="font-size:26px;font-weight:900;color:#2e4a1a;letter-spacing:4px;font-family:Georgia,serif">KUITANSI</span>' +
+      '<span style="color:#c9981a;font-size:12px"> &nbsp; \u2756</span>' +
     '</div>' +
-    '<div style="font-size:20px;font-weight:900;letter-spacing:3px;color:#2e4a1a;margin-top:1px">ALQOLAM</div>' +
-    '<div style="color:#c9981a;font-size:10px;margin-top:3px">\u2756 \u2500\u2500\u2500\u2500 \u2756</div>';
+    '<div style="font-size:17px;font-weight:900;letter-spacing:2px;color:#2e4a1a;margin-top:1px">ALQOLAM</div>' +
+    '<div style="font-size:8.5px;color:#444;line-height:1.4">Masjid AlQOlam &nbsp;|&nbsp; Yayasan IQRO\' Bekasi</div>' +
+    '<div style="color:#c9981a;font-size:8px;margin-top:2px">\u2756 \u2500\u2500\u2500\u2500\u2500 \u2756</div>';
   hdr.appendChild(ctrDiv);
 
   // Right: No. box
-  var nomDiv = s(d_('div'), 'text-align:right;min-width:120px');
+  var nomDiv = st(mk('div'), 'text-align:right;min-width:100px');
   nomDiv.innerHTML =
-    '<div style="font-size:9px;color:#555;margin-bottom:3px">No.</div>' +
-    '<div style="display:inline-flex;border:1.5px solid #2e4a1a;overflow:hidden;font-size:10px;font-weight:700">' +
-      '<span style="background:#2e4a1a;color:#fff;padding:3px 8px">No.</span>' +
-      '<span style="padding:3px 14px;min-width:80px;letter-spacing:.5px">' + d.nomor + '</span>' +
+    '<div style="font-size:8.5px;color:#555;margin-bottom:2px">No.</div>' +
+    '<div style="display:inline-flex;border:1.5px solid #2e4a1a;overflow:hidden;font-size:9.5px;font-weight:700">' +
+      '<span style="background:#2e4a1a;color:#fff;padding:2px 6px">No.</span>' +
+      '<span style="padding:2px 10px;min-width:70px;letter-spacing:.5px">' + d.nomor + '</span>' +
     '</div>';
   hdr.appendChild(nomDiv);
   inn.appendChild(hdr);
 
   // ---- TANGGAL ----
-  inn.appendChild(s(t(d_('div'), 'Tanggal : ' + d.tglFormatted),
-    'text-align:right;font-size:11px;color:#333;margin-bottom:9px'));
+  inn.appendChild(st(tx(mk('div'), 'Tanggal : ' + d.tglFormatted),
+    'text-align:right;font-size:10px;color:#333;margin-bottom:5px'));
 
   // ---- FIELDS ----
-  var fieldsData = [
-    {lbl:'Telah Terima Dari', val: d.nama,      italic: false},
-    {lbl:'Uang Sejumlah',     val: d.terbilang, italic: true},
-    {lbl:'Untuk Pembayaran',  val: d.keterangan, italic: false, minH: '30px'}
-  ];
-  fieldsData.forEach(function(f) {
-    var row = s(d_('div'), 'display:flex;align-items:flex-start;margin-bottom:7px;border-bottom:1px dotted #c9981a;padding-bottom:5px' + (f.minH ? ';min-height:' + f.minH : ''));
-    var lbl = s(t(d_('span'), f.lbl), 'width:140px;flex-shrink:0;font-size:11.5px;color:#333');
-    var col = s(t(d_('span'), ':'), 'width:14px;flex-shrink:0;text-align:center');
-    var val = s(t(d_('span'), f.val), 'flex:1;font-size:12px;font-weight:700;padding-left:5px' + (f.italic ? ';font-style:italic;text-transform:capitalize' : ''));
+  [
+    {lbl:'Telah Terima Dari', val: d.nama,      it: false},
+    {lbl:'Uang Sejumlah',     val: d.terbilang, it: true},
+    {lbl:'Untuk Pembayaran',  val: d.keterangan, it: false, mh:'24px'}
+  ].forEach(function(f) {
+    var row = st(mk('div'),
+      'display:flex;align-items:flex-start;margin-bottom:5px;' +
+      'border-bottom:1px dotted #c9981a;padding-bottom:3px' +
+      (f.mh ? ';min-height:' + f.mh : ''));
+    var lbl = st(tx(mk('span'), f.lbl),
+      'width:130px;flex-shrink:0;font-size:11px;color:#333');
+    var col = st(tx(mk('span'), ':'),
+      'width:12px;flex-shrink:0;text-align:center');
+    var val = st(tx(mk('span'), f.val),
+      'flex:1;font-size:11px;font-weight:700;padding-left:4px' +
+      (f.it ? ';font-style:italic;text-transform:capitalize' : ''));
     row.appendChild(lbl); row.appendChild(col); row.appendChild(val);
     inn.appendChild(row);
   });
 
   // ---- BOTTOM ROW ----
-  var bot = s(d_('div'), 'display:flex;align-items:flex-end;justify-content:space-between;margin-top:12px');
+  var bot = st(mk('div'),
+    'display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px');
 
-  // LEFT: nominal box + keterangan kecil
-  var leftDiv = d_('div');
-  var nomBox = s(d_('div'), 'display:inline-flex;border:2px solid #2e4a1a;border-radius:4px;overflow:hidden');
+  // LEFT: nominal + keterangan kecil
+  var leftDiv = mk('div');
+  var nomBox = st(mk('div'),
+    'display:inline-flex;border:2px solid #2e4a1a;border-radius:3px;overflow:hidden');
   nomBox.innerHTML =
-    '<span style="background:#2e4a1a;color:#fff;font-size:12px;font-weight:700;padding:5px 10px;display:flex;align-items:center">Rp.</span>' +
-    '<span style="font-size:22px;font-weight:900;padding:4px 16px;color:#2e4a1a;letter-spacing:1px">' +
+    '<span style="background:#2e4a1a;color:#fff;font-size:11px;font-weight:700;' +
+    'padding:4px 8px;display:flex;align-items:center">Rp.</span>' +
+    '<span style="font-size:19px;font-weight:900;padding:3px 12px;color:#2e4a1a;letter-spacing:1px">' +
     Number(d.nominal).toLocaleString('id-ID') + ',-</span>';
   leftDiv.appendChild(nomBox);
-  var ketKecil = s(d_('div'),
-    'font-size:7.5px;color:#666;font-style:italic;margin-top:7px;max-width:185px;line-height:1.5');
-  ketKecil.innerHTML = '<i>Keterangan :</i><br>' +
+  var ket = st(mk('div'),
+    'font-size:7px;color:#666;font-style:italic;margin-top:5px;max-width:170px;line-height:1.4');
+  ket.innerHTML = '<i>Keterangan :</i><br>' +
     'Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.<br>' +
     'Dokumen dinyatakan valid setelah tercatat di rekening lembaga.';
-  leftDiv.appendChild(ketKecil);
+  leftDiv.appendChild(ket);
   bot.appendChild(leftDiv);
 
-  // CENTER: QR Code + label
-  var qrDiv = s(d_('div'), 'text-align:center;min-width:130px');
-  qrDiv.innerHTML =
-    '<div style="font-size:9px;color:#555;margin-bottom:4px">Scan untuk verifikasi</div>' +
-    '<img src="' + qrUrl + '" style="width:90px;height:90px;border:1px solid #ddd;padding:3px;background:#fff" crossorigin="anonymous">' +
-    '<div style="font-size:7px;color:#888;margin-top:3px;letter-spacing:.3px">alqolam.online</div>';
-  bot.appendChild(qrDiv);
-
   // RIGHT: Penerima + Yang Menyerahkan
-  var ttdRow = s(d_('div'), 'display:flex;gap:30px;align-items:flex-end');
+  var ttdRow = st(mk('div'), 'display:flex;gap:24px;align-items:flex-end');
 
-  // Penerima
-  var penDiv = s(d_('div'), 'text-align:center;min-width:110px');
-  penDiv.innerHTML =
-    '<div style="font-size:10px;color:#555;margin-bottom:50px">Penerima,</div>' +
-    '<div style="font-size:11px;font-weight:700">Joko Purwanto</div>' +
-    '<div style="border-bottom:1px solid #222;width:110px;margin:2px auto 0"></div>' +
-    '<div style="font-size:9px;color:#555;margin-top:2px">( Joko Purwanto )</div>';
-  ttdRow.appendChild(penDiv);
-
-  // Yang Menyerahkan
-  var myDiv = s(d_('div'), 'text-align:center;min-width:110px');
-  myDiv.innerHTML =
-    '<div style="font-size:10px;color:#555;margin-bottom:50px">Yang Menyerahkan,</div>' +
-    '<div style="border-bottom:1px solid #222;width:110px;margin:0 auto"></div>' +
-    '<div style="font-size:9px;color:#555;margin-top:2px">( ' + d.nama + ' )</div>';
-  ttdRow.appendChild(myDiv);
-
+  function mkTtd(label, name) {
+    var col = st(mk('div'), 'text-align:center;min-width:100px');
+    col.innerHTML =
+      '<div style="font-size:9.5px;color:#555;margin-bottom:40px">' + label + '</div>' +
+      (name ? '<div style="font-size:10.5px;font-weight:700;margin-bottom:1px">' + name + '</div>' : '') +
+      '<div style="border-bottom:1px solid #222;width:100px;margin:0 auto"></div>' +
+      '<div style="font-size:8.5px;color:#555;margin-top:2px">( ' + (name || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') + ' )</div>';
+    return col;
+  }
+  ttdRow.appendChild(mkTtd('Penerima,', 'Joko Purwanto'));
+  ttdRow.appendChild(mkTtd('Yang Menyerahkan,', d.nama));
   bot.appendChild(ttdRow);
   inn.appendChild(bot);
 
   // Gold line + bottom bar
-  wrap.appendChild(s(d_('div'), 'border-top:1.5px solid #c9981a;margin:4px 9px'));
-  wrap.appendChild(s(d_('div'), 'background:#2e4a1a;height:10px'));
+  wrap.appendChild(st(mk('div'), 'border-top:1px solid #c9981a;margin:3px 8px'));
+  wrap.appendChild(st(mk('div'), 'background:#2e4a1a;height:10px;width:100%'));
 
   return wrap;
 }
