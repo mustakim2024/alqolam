@@ -142,7 +142,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 .btn-confirm:hover{background:#0a5c2e;color:#fff}.btn-unconfirm:hover{background:#c9981a;color:#fff}
 @media(max-width:600px){.fg2,.clgrid{grid-template-columns:1fr}.appmain{padding:14px}.smg{grid-template-columns:1fr}.lbox{padding:32px 20px}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -2806,217 +2806,204 @@ function konfirmasiKuitansi(encoded) {
 }
 
 function generateKuitansiPdf(d) {
-  var filename = 'Kuitansi_' + d.nomor.replace(/\//g, '-') + '.pdf';
-
-  if (typeof html2pdf === 'undefined') {
-    toast('Library PDF belum siap, coba lagi...', false); return;
+  if (typeof window.jspdf === 'undefined') {
+    toast('Library jsPDF belum siap, coba lagi...', false); return;
   }
+  var jsPDF = window.jspdf.jsPDF;
 
-  // Overlay loading
-  var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;' +
-    'background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:center;justify-content:center';
-  var msg = document.createElement('div');
-  msg.style.cssText = 'background:#fff;padding:18px 28px;border-radius:8px;' +
-    'font-size:14px;color:#0a5c2e;font-weight:700;text-align:center';
-  msg.innerHTML = 'Membuat kuitansi PDF...<br><small style="font-weight:400;color:#888">Harap tunggu</small>';
-  overlay.appendChild(msg);
-  document.body.appendChild(overlay);
+  // A5 landscape: 210 x 148 mm
+  var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+  var W = 210, H = 148;
+  var mg = 8; // margin
 
-  // Build kuitansi element - visible on screen for html2pdf
-  var el = buildKuitansiEl(d);
-  el.style.position = 'fixed';
-  el.style.top = '0';
-  el.style.left = '0';
-  el.style.zIndex = '9997';
-  document.body.appendChild(el);
+  // ── BORDER EMAS LUAR ──
+  doc.setDrawColor(139, 105, 20);
+  doc.setLineWidth(0.8);
+  doc.rect(mg, mg, W - mg*2, H - mg*2);
 
-  setTimeout(function() {
-    html2pdf().set({
-      margin: 0,
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.97 },
-      html2canvas: {
-        scale: 1,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: 794,
-        height: 559,
-        windowWidth: 794,
-        windowHeight: 559,
-        scrollX: 0,
-        scrollY: 0
-      },
-      jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
-    }).from(el).save().then(function() {
-      document.body.removeChild(el);
-      document.body.removeChild(overlay);
-      toast('Kuitansi ' + d.nomor + ' berhasil diunduh!', true);
-    }).catch(function(err) {
-      if (document.body.contains(el)) document.body.removeChild(el);
-      if (document.body.contains(overlay)) document.body.removeChild(overlay);
-      toast('Gagal: ' + String(err), false);
-    });
-  }, 500);
-}
+  // ── BAR HIJAU ATAS ──
+  doc.setFillColor(46, 74, 26);
+  doc.rect(0, 0, W, 7, 'F');
 
-function buildKuitansiEl(d) {
-  var mk = function(tag) { return document.createElement(tag); };
-  var st = function(el, css) { el.style.cssText = css; return el; };
-  var tx = function(el, txt) { el.textContent = txt; return el; };
+  // ── BAR HIJAU BAWAH ──
+  doc.rect(0, H - 7, W, 7, 'F');
 
-  // ROOT — ukuran A5 landscape: 210mm x 148mm
-  // A5 landscape: 210x148mm = 794x559px at 96dpi
-  var wrap = st(mk('div'), [
-    'width:794px',
-    'height:559px',
-    'background:#ffffff',
-    'font-family:"Times New Roman",Georgia,serif',
-    'color:#111',
-    'box-sizing:border-box',
-    'border:2px solid #8B6914',
-    'position:relative',
-    'overflow:hidden',
-    'display:block'
-  ].join(';'));
+  // ── GARIS EMAS dalam (atas & bawah) ──
+  doc.setDrawColor(201, 152, 26);
+  doc.setLineWidth(0.3);
+  doc.line(mg + 2, 10, W - mg - 2, 10);
+  doc.line(mg + 2, H - 10, W - mg - 2, H - 10);
 
-  // Top green bar
-  wrap.appendChild(st(mk('div'), 'background:#2e4a1a;height:10px;width:100%'));
-  // Gold line
-  wrap.appendChild(st(mk('div'), 'border-bottom:1px solid #c9981a;margin:3px 8px 0'));
+  // ── ORNAMEN SUDUT ❖ ──
+  doc.setTextColor(201, 152, 26);
+  doc.setFontSize(10);
+  doc.text('\u2756', mg + 1, 14);
+  doc.text('\u2756', W - mg - 4, 14);
+  doc.text('\u2756', mg + 1, H - 11);
+  doc.text('\u2756', W - mg - 4, H - 11);
 
-  // Corner ornaments ❖
-  function orn(topVal, bottomVal, leftVal, rightVal) {
-    var o = mk('div');
-    o.textContent = '\u2756';
-    var css = 'position:absolute;color:#c9981a;font-size:15px;line-height:1;';
-    if (topVal    !== null) css += 'top:'    + topVal    + 'px;';
-    if (bottomVal !== null) css += 'bottom:' + bottomVal + 'px;';
-    if (leftVal   !== null) css += 'left:'   + leftVal   + 'px;';
-    if (rightVal  !== null) css += 'right:'  + rightVal  + 'px;';
-    o.style.cssText = css;
-    wrap.appendChild(o);
-  }
-  orn(11,null,8,null);
-  orn(11,null,null,8);
-  orn(null,11,8,null);
-  orn(null,11,null,8);
+  // ── JUDUL KUITANSI ──
+  var cx = W / 2;
+  doc.setTextColor(201, 152, 26);
+  doc.setFontSize(9);
+  doc.text('\u2756', cx - 42, 22, { align: 'center' });
+  doc.text('\u2756', cx + 42, 22, { align: 'center' });
 
-  // INNER padding area
-  var inn = st(mk('div'), 'padding:6px 20px 10px');
-  wrap.appendChild(inn);
+  doc.setTextColor(46, 74, 26);
+  doc.setFontSize(26);
+  doc.setFont('times', 'bold');
+  doc.text('KUITANSI', cx, 24, { align: 'center' });
 
-  // ---- HEADER ----
-  var hdr = st(mk('div'), [
-    'display:flex',
-    'align-items:center',
-    'justify-content:space-between',
-    'border-bottom:1px solid #c9981a',
-    'padding-bottom:6px',
-    'margin-bottom:5px'
-  ].join(';'));
+  doc.setFontSize(14);
+  doc.text('ALQOLAM', cx, 31, { align: 'center' });
 
-  // Left: org name
-  var orgDiv = st(mk('div'), 'min-width:100px');
-  orgDiv.innerHTML =
-    '<div style="font-size:10px;color:#555">Masjid AlQOlam</div>' +
-    '<div style="font-size:8.5px;color:#888">Yayasan IQRO\' Bekasi</div>';
-  hdr.appendChild(orgDiv);
+  doc.setFontSize(8);
+  doc.setFont('times', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text('Masjid AlQOlam  |  Yayasan IQRO\' Bekasi', cx, 36, { align: 'center' });
 
-  // Center: big title
-  var ctrDiv = st(mk('div'), 'flex:1;text-align:center;padding:0 6px');
-  ctrDiv.innerHTML =
-    '<div>' +
-      '<span style="color:#c9981a;font-size:12px">\u2756 &nbsp;</span>' +
-      '<span style="font-size:26px;font-weight:900;color:#2e4a1a;letter-spacing:4px;font-family:Georgia,serif">KUITANSI</span>' +
-      '<span style="color:#c9981a;font-size:12px"> &nbsp; \u2756</span>' +
-    '</div>' +
-    '<div style="font-size:17px;font-weight:900;letter-spacing:2px;color:#2e4a1a;margin-top:1px">ALQOLAM</div>' +
-    '<div style="font-size:8.5px;color:#444;line-height:1.4">Masjid AlQOlam &nbsp;|&nbsp; Yayasan IQRO\' Bekasi</div>' +
-    '<div style="color:#c9981a;font-size:8px;margin-top:2px">\u2756 \u2500\u2500\u2500\u2500\u2500 \u2756</div>';
-  hdr.appendChild(ctrDiv);
+  // garis emas dekoratif bawah judul
+  doc.setDrawColor(201, 152, 26);
+  doc.setLineWidth(0.4);
+  doc.line(cx - 40, 38, cx + 40, 38);
 
-  // Right: No. box
-  var nomDiv = st(mk('div'), 'text-align:right;min-width:100px');
-  nomDiv.innerHTML =
-    '<div style="font-size:8.5px;color:#555;margin-bottom:2px">No.</div>' +
-    '<div style="display:inline-flex;border:1.5px solid #2e4a1a;overflow:hidden;font-size:9.5px;font-weight:700">' +
-      '<span style="background:#2e4a1a;color:#fff;padding:2px 6px">No.</span>' +
-      '<span style="padding:2px 10px;min-width:70px;letter-spacing:.5px">' + d.nomor + '</span>' +
-    '</div>';
-  hdr.appendChild(nomDiv);
-  inn.appendChild(hdr);
+  // ── NOMOR KUITANSI (kanan atas) ──
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(7.5);
+  doc.setFont('times', 'normal');
+  doc.text('No.', W - mg - 4, 17, { align: 'right' });
+  // Kotak nomor
+  doc.setDrawColor(46, 74, 26);
+  doc.setLineWidth(0.4);
+  var nomW = 52, nomH = 7, nomX = W - mg - 4 - nomW, nomY = 18.5;
+  doc.rect(nomX, nomY, nomW, nomH);
+  // Background 'No.' label
+  doc.setFillColor(46, 74, 26);
+  doc.rect(nomX, nomY, 12, nomH, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7.5);
+  doc.setFont('times', 'bold');
+  doc.text('No.', nomX + 6, nomY + 5, { align: 'center' });
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('times', 'normal');
+  doc.setFontSize(7.5);
+  doc.text(d.nomor, nomX + nomW - 2, nomY + 5, { align: 'right' });
 
-  // ---- TANGGAL ----
-  inn.appendChild(st(tx(mk('div'), 'Tanggal : ' + d.tglFormatted),
-    'text-align:right;font-size:10px;color:#333;margin-bottom:5px'));
+  // ── INFO LEMBAGA (kiri atas) ──
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(8);
+  doc.setFont('times', 'normal');
+  doc.text('Masjid AlQOlam', mg + 4, 18);
+  doc.setFontSize(7);
+  doc.text('Yayasan IQRO\' Bekasi', mg + 4, 23);
 
-  // ---- FIELDS ----
-  [
-    {lbl:'Telah Terima Dari', val: d.nama,      it: false},
-    {lbl:'Uang Sejumlah',     val: d.terbilang, it: true},
-    {lbl:'Untuk Pembayaran',  val: d.keterangan, it: false, mh:'24px'}
-  ].forEach(function(f) {
-    var row = st(mk('div'),
-      'display:flex;align-items:flex-start;margin-bottom:5px;' +
-      'border-bottom:1px dotted #c9981a;padding-bottom:3px' +
-      (f.mh ? ';min-height:' + f.mh : ''));
-    var lbl = st(tx(mk('span'), f.lbl),
-      'width:130px;flex-shrink:0;font-size:11px;color:#333');
-    var col = st(tx(mk('span'), ':'),
-      'width:12px;flex-shrink:0;text-align:center');
-    var val = st(tx(mk('span'), f.val),
-      'flex:1;font-size:11px;font-weight:700;padding-left:4px' +
-      (f.it ? ';font-style:italic;text-transform:capitalize' : ''));
-    row.appendChild(lbl); row.appendChild(col); row.appendChild(val);
-    inn.appendChild(row);
+  // ── GARIS PEMISAH HEADER ──
+  doc.setDrawColor(201, 152, 26);
+  doc.setLineWidth(0.4);
+  doc.line(mg + 2, 40, W - mg - 2, 40);
+
+  // ── TANGGAL ──
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(8.5);
+  doc.setFont('times', 'normal');
+  doc.text('Tanggal : ' + d.tglFormatted, W - mg - 4, 46, { align: 'right' });
+
+  // ── FIELD ROWS ──
+  var fields = [
+    { lbl: 'Telah Terima Dari', val: d.nama },
+    { lbl: 'Uang Sejumlah',     val: d.terbilang.charAt(0).toUpperCase() + d.terbilang.slice(1) },
+    { lbl: 'Untuk Pembayaran',  val: d.keterangan }
+  ];
+
+  var fy = 54;
+  var lblW = 42, colX = mg + lblW + 4, valX = colX + 4;
+  fields.forEach(function(f) {
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.text(f.lbl, mg + 4, fy);
+    doc.text(':', colX, fy);
+
+    doc.setFont('times', 'bold');
+    doc.setTextColor(20, 20, 20);
+    // Word wrap for long values
+    var lines = doc.splitTextToSize(f.val, W - valX - mg - 4);
+    doc.text(lines, valX, fy);
+
+    // Dotted line
+    doc.setDrawColor(180, 160, 100);
+    doc.setLineWidth(0.2);
+    var lineH = Math.max(6, lines.length * 5.5);
+    doc.setLineDash([0.5, 1]);
+    doc.line(mg + 4, fy + 2.5, W - mg - 4, fy + 2.5);
+    doc.setLineDash([]);
+    fy += lineH;
   });
 
-  // ---- BOTTOM ROW ----
-  var bot = st(mk('div'),
-    'display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px');
+  // ── KOTAK NOMINAL (kiri bawah) ──
+  var botY = H - 40;
+  var boxX = mg + 4, boxY = botY, boxW = 80, boxH = 12;
+  doc.setDrawColor(46, 74, 26);
+  doc.setLineWidth(0.6);
+  doc.rect(boxX, boxY, boxW, boxH);
+  // Label Rp.
+  doc.setFillColor(46, 74, 26);
+  doc.rect(boxX, boxY, 14, boxH, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('times', 'bold');
+  doc.text('Rp.', boxX + 7, boxY + 8, { align: 'center' });
+  // Nominal value
+  doc.setTextColor(46, 74, 26);
+  doc.setFontSize(13);
+  doc.text(Number(d.nominal).toLocaleString('id-ID') + ',-', boxX + boxW - 3, boxY + 9, { align: 'right' });
 
-  // LEFT: nominal + keterangan kecil
-  var leftDiv = mk('div');
-  var nomBox = st(mk('div'),
-    'display:inline-flex;border:2px solid #2e4a1a;border-radius:3px;overflow:hidden');
-  nomBox.innerHTML =
-    '<span style="background:#2e4a1a;color:#fff;font-size:11px;font-weight:700;' +
-    'padding:4px 8px;display:flex;align-items:center">Rp.</span>' +
-    '<span style="font-size:19px;font-weight:900;padding:3px 12px;color:#2e4a1a;letter-spacing:1px">' +
-    Number(d.nominal).toLocaleString('id-ID') + ',-</span>';
-  leftDiv.appendChild(nomBox);
-  var ket = st(mk('div'),
-    'font-size:7px;color:#666;font-style:italic;margin-top:5px;max-width:170px;line-height:1.4');
-  ket.innerHTML = '<i>Keterangan :</i><br>' +
-    'Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.<br>' +
-    'Dokumen dinyatakan valid setelah tercatat di rekening lembaga.';
-  leftDiv.appendChild(ket);
-  bot.appendChild(leftDiv);
+  // ── KETERANGAN KECIL ──
+  doc.setTextColor(120, 120, 120);
+  doc.setFontSize(6.2);
+  doc.setFont('times', 'italic');
+  doc.text('Keterangan :', boxX, botY + 15);
+  doc.text('Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.', boxX, botY + 19);
+  doc.text('Dokumen dinyatakan valid setelah tercatat di rekening lembaga.', boxX, botY + 23);
 
-  // RIGHT: Penerima + Yang Menyerahkan
-  var ttdRow = st(mk('div'), 'display:flex;gap:24px;align-items:flex-end');
+  // ── TANDA TANGAN ──
+  var ttdY = botY;
+  var pen1X = cx + 10;  // Penerima
+  var pen2X = W - mg - 28; // Yang Menyerahkan
 
-  function mkTtd(label, name) {
-    var col = st(mk('div'), 'text-align:center;min-width:100px');
-    col.innerHTML =
-      '<div style="font-size:9.5px;color:#555;margin-bottom:40px">' + label + '</div>' +
-      (name ? '<div style="font-size:10.5px;font-weight:700;margin-bottom:1px">' + name + '</div>' : '') +
-      '<div style="border-bottom:1px solid #222;width:100px;margin:0 auto"></div>' +
-      '<div style="font-size:8.5px;color:#555;margin-top:2px">( ' + (name || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') + ' )</div>';
-    return col;
-  }
-  ttdRow.appendChild(mkTtd('Penerima,', 'Joko Purwanto'));
-  ttdRow.appendChild(mkTtd('Yang Menyerahkan,', d.nama));
-  bot.appendChild(ttdRow);
-  inn.appendChild(bot);
+  // Penerima
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(8.5);
+  doc.setFont('times', 'normal');
+  doc.text('Penerima,', pen1X, ttdY, { align: 'center' });
+  doc.setFont('times', 'bold');
+  doc.setFontSize(9);
+  doc.text('Joko Purwanto', pen1X, ttdY + 22, { align: 'center' });
+  doc.setDrawColor(30, 30, 30);
+  doc.setLineWidth(0.4);
+  doc.line(pen1X - 22, ttdY + 23.5, pen1X + 22, ttdY + 23.5);
+  doc.setFont('times', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  doc.text('( Joko Purwanto )', pen1X, ttdY + 27, { align: 'center' });
 
-  // Gold line + bottom bar
-  wrap.appendChild(st(mk('div'), 'border-top:1px solid #c9981a;margin:3px 8px'));
-  wrap.appendChild(st(mk('div'), 'background:#2e4a1a;height:10px;width:100%'));
+  // Yang Menyerahkan
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(8.5);
+  doc.setFont('times', 'normal');
+  doc.text('Yang Menyerahkan,', pen2X, ttdY, { align: 'center' });
+  doc.setDrawColor(30, 30, 30);
+  doc.setLineWidth(0.4);
+  doc.line(pen2X - 22, ttdY + 23.5, pen2X + 22, ttdY + 23.5);
+  doc.setFont('times', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  doc.text('( ' + d.nama + ' )', pen2X, ttdY + 27, { align: 'center' });
 
-  return wrap;
+  // ── SAVE ──
+  var filename = 'Kuitansi_' + d.nomor.replace(/\//g, '-') + '.pdf';
+  doc.save(filename);
+  toast('Kuitansi ' + d.nomor + ' berhasil diunduh!', true);
 }
 
 
