@@ -387,7 +387,7 @@ function renderApp(){
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
-  else if(r==='bendum'){  tabs=[{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
+  else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
   for(var i=0;i<tabs.length;i++){
@@ -2470,6 +2470,362 @@ function pgStaffRuangan(el) {
   renderJadwal(tblArea, true);
 }
 
+
+// ================================================================
+//  BENDUM - INPUT PEMASUKAN MANUAL + KUITANSI DIGITAL
+// ================================================================
+
+// Helper: angka ke terbilang Bahasa Indonesia
+function terbilang(angka) {
+  var satuan = ['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan',
+    'sepuluh','sebelas','dua belas','tiga belas','empat belas','lima belas','enam belas',
+    'tujuh belas','delapan belas','sembilan belas'];
+  var ribuan = ['','ribu','juta','miliar','triliun'];
+
+  if (angka === 0) return 'nol';
+  if (angka < 0) return 'minus ' + terbilang(-angka);
+
+  var hasil = '';
+  var n = Math.floor(angka);
+  var level = 0;
+
+  function kelompok(n) {
+    if (n === 0) return '';
+    if (n < 20) return satuan[n] + ' ';
+    if (n < 100) return satuan[Math.floor(n/10)*10 > 0 ? 0 : 0] + (Math.floor(n/10) === 1 ? '' : satuan[Math.floor(n/10)]) + (Math.floor(n/10) === 1 ? 'sepuluh ' : ' puluh ') + kelompok(n % 10);
+    if (n < 100) return satuan[Math.floor(n/10)] + ' puluh ' + kelompok(n%10);
+    if (n < 1000) return (n >= 100 ? (Math.floor(n/100) === 1 ? 'seratus ' : satuan[Math.floor(n/100)] + ' ratus ') : '') + kelompok(n%100);
+    return kelompok(n);
+  }
+
+  function conv(n) {
+    if (n === 0) return '';
+    if (n < 20) return satuan[n] + ' ';
+    if (n < 100) {
+      var p = Math.floor(n/10), s = n%10;
+      return (p===1 ? 'sepuluh ' : satuan[p]+' puluh ') + (s>0 ? satuan[s]+' ' : '');
+    }
+    var h = Math.floor(n/100), rem = n%100;
+    return (h===1?'seratus ':satuan[h]+' ratus ') + conv(rem);
+  }
+
+  var bagian = [];
+  var tmp = n;
+  var lv = 0;
+  while (tmp > 0) {
+    var grp = tmp % 1000;
+    if (grp > 0) {
+      var str = (grp===1 && lv===1) ? 'seribu ' : conv(grp) + (lv>0 ? ribuan[lv]+' ' : '');
+      bagian.unshift(str);
+    }
+    tmp = Math.floor(tmp/1000);
+    lv++;
+  }
+  return bagian.join('').trim() + ' rupiah';
+}
+
+// Format nominal dengan titik
+function fmtRp(n) {
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
+}
+
+function pgBendumPemasukan(el) {
+  el.innerHTML = '';
+  el.appendChild(mkPh('Input Pemasukan Manual', 'Catat pemasukan dan generate kuitansi digital'));
+
+  var card = document.createElement('div'); card.className='card';
+  var ch = document.createElement('div'); ch.className='chead'; ch.textContent='Form Input Pemasukan';
+  var cb = document.createElement('div'); cb.className='cbody';
+
+  var info = document.createElement('div'); info.className='info-box';
+  info.innerHTML = 'Isi data sesuai bukti transfer. Setelah konfirmasi, kuitansi digital otomatis dibuat dan bisa diunduh sebagai PDF.';
+  cb.appendChild(info);
+
+  // REKENING
+  var rekWrap = document.createElement('div'); rekWrap.style.marginBottom='14px';
+  rekWrap.appendChild(mkLabel('Rekening Tujuan / Sumber',true));
+  var rekSel = document.createElement('select'); rekSel.id='kuit_rekening';
+  var rekOpts = '<option value="">-- Pilih Rekening --</option>';
+  for (var i=0; i<REKENING.length; i++) rekOpts += '<option value="'+REKENING[i]+'">'+REKENING[i]+'</option>';
+  rekSel.innerHTML = rekOpts;
+  rekSel.style.cssText = 'width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px';
+  rekWrap.appendChild(rekSel);
+  cb.appendChild(rekWrap);
+
+  // TANGGAL
+  var tglWrap = document.createElement('div'); tglWrap.style.marginBottom='14px';
+  tglWrap.appendChild(mkLabel('Tanggal Transaksi',true));
+  var tglInp = mkInput('kuit_tanggal','date','');
+  tglInp.value = new Date().toISOString().split('T')[0];
+  tglWrap.appendChild(tglInp);
+  cb.appendChild(tglWrap);
+
+  // NAMA DONATUR
+  var namaWrap = document.createElement('div'); namaWrap.style.marginBottom='14px';
+  namaWrap.appendChild(mkLabel('Nama Pengirim / Donatur',true));
+  var namaInp = mkInput('kuit_nama','text','Nama lengkap pengirim...');
+  namaWrap.appendChild(namaInp);
+  cb.appendChild(namaWrap);
+
+  // NOMINAL
+  var nomWrap = document.createElement('div'); nomWrap.style.marginBottom='14px';
+  nomWrap.appendChild(mkLabel('Nominal Diterima (Rp)',true));
+  var nomInp = mkInput('kuit_nominal','number','0');
+  nomInp.min = '0';
+  nomInp.style.cssText = 'width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px';
+  nomInp.oninput = function() {
+    var v = parseInt(this.value)||0;
+    var tbEl = document.getElementById('kuit_terbilang_preview');
+    if(tbEl) tbEl.textContent = v > 0 ? terbilang(v) : '';
+  };
+  nomWrap.appendChild(nomInp);
+  var tbPrev = document.createElement('div');
+  tbPrev.id = 'kuit_terbilang_preview';
+  tbPrev.style.cssText = 'font-size:12px;color:#0a5c2e;margin-top:4px;font-style:italic';
+  nomWrap.appendChild(tbPrev);
+  cb.appendChild(nomWrap);
+
+  // KETERANGAN
+  var ketWrap = document.createElement('div'); ketWrap.style.marginBottom='14px';
+  ketWrap.appendChild(mkLabel('Keterangan / Untuk Pembayaran',true));
+  var ketInp = document.createElement('textarea');
+  ketInp.id = 'kuit_keterangan';
+  ketInp.placeholder = 'Contoh: infaq DKM masjid Al Qolam';
+  ketInp.rows = 3;
+  ketInp.style.cssText = 'width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical';
+  ketWrap.appendChild(ketInp);
+  cb.appendChild(ketWrap);
+
+  // DICATAT OLEH
+  var olehWrap = document.createElement('div'); olehWrap.style.marginBottom='20px';
+  olehWrap.appendChild(mkLabel('Dicatat Oleh',true));
+  var olehInp = mkInput('kuit_oleh','text','');
+  if(CU) olehInp.value = CU.name;
+  olehWrap.appendChild(olehInp);
+  cb.appendChild(olehWrap);
+
+  // BUTTON
+  var act = document.createElement('div'); act.className='act';
+  var btnPreview = document.createElement('button');
+  btnPreview.className='btnp'; btnPreview.textContent='Pratinjau & Konfirmasi';
+  btnPreview.onclick = pratinjauKuitansi;
+  act.appendChild(btnPreview);
+  cb.appendChild(act);
+
+  card.appendChild(ch); card.appendChild(cb);
+  el.appendChild(card);
+
+  // Preview area
+  var prev = document.createElement('div'); prev.id='kuit_preview_area';
+  el.appendChild(prev);
+}
+
+function pratinjauKuitansi() {
+  var v = function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  var rek    = v('kuit_rekening');
+  var tgl    = v('kuit_tanggal');
+  var nama   = v('kuit_nama');
+  var nom    = parseInt(document.getElementById('kuit_nominal').value)||0;
+  var ket    = v('kuit_keterangan');
+  var oleh   = v('kuit_oleh');
+
+  if(!rek)  { toast('Pilih rekening!', false); return; }
+  if(!tgl)  { toast('Isi tanggal!', false); return; }
+  if(!nama) { toast('Isi nama donatur!', false); return; }
+  if(!nom)  { toast('Isi nominal!', false); return; }
+  if(!ket)  { toast('Isi keterangan!', false); return; }
+
+  var tb = terbilang(nom);
+
+  // Get counter first
+  gasCall('getKuitansiCounter',[], function(res) {
+    var counter = res.counter || 31;
+    var tglObj  = new Date(tgl);
+    var bulan   = String(tglObj.getMonth()+1).padStart(2,'0');
+    var nomorPreview = counter + '/AlQolam/' + bulan + '/2026';
+
+    var prev = document.getElementById('kuit_preview_area'); if(!prev) return;
+
+    var tglFormatted = tglObj.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+
+    prev.innerHTML =
+      '<div class="card" style="margin-top:16px">'+
+      '<div class="chead" style="background:#1a4a8a;color:#fff">'+
+      '📄 Pratinjau Kuitansi — No. '+nomorPreview+'</div>'+
+      '<div class="cbody">'+
+      '<div style="background:#fff8e8;border:.5px solid #c9981a;border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px">'+
+      '<b>⚠️ Periksa data sebelum konfirmasi.</b> Setelah dikonfirmasi, nomor kuitansi akan digunakan dan tidak bisa diulang.'+
+      '</div>'+
+      '<table style="width:100%;font-size:13px;border-collapse:collapse">'+
+      '<tr><td style="padding:7px 0;color:#888;width:160px">Nomor Kuitansi</td><td><b>'+nomorPreview+'</b></td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Tanggal</td><td>'+tglFormatted+'</td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Telah Diterima Dari</td><td><b>'+nama+'</b></td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Nominal</td><td><b style="color:#1a4a8a;font-size:15px">'+fmtRp(nom)+'</b></td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Terbilang</td><td style="font-style:italic">'+tb+'</td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Untuk Pembayaran</td><td>'+ket+'</td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Rekening</td><td>'+rek+'</td></tr>'+
+      '<tr><td style="padding:7px 0;color:#888">Dicatat Oleh</td><td>'+oleh+'</td></tr>'+
+      '</table>'+
+      '<div class="act" style="margin-top:16px;gap:10px">'+
+      '<button class="btno" onclick="document.getElementById(\'kuit_preview_area\').innerHTML=\'\'">← Edit</button>'+
+      '<button class="btnp" id="kuit_confirm_btn" style="background:#0a5c2e" onclick="konfirmasiKuitansi(\''+
+        encodeURIComponent(JSON.stringify({rek,tgl,nama,nom,ket,oleh,nomorPreview,tb,tglFormatted}))+'\')">'+
+      '✓ Konfirmasi & Generate Kuitansi</button>'+
+      '</div></div></div>';
+  }, function(m){ toast('Gagal ambil nomor: '+m, false); });
+}
+
+function konfirmasiKuitansi(encoded) {
+  var d = JSON.parse(decodeURIComponent(encoded));
+  var btn = document.getElementById('kuit_confirm_btn');
+  if(btn){ btn.disabled=true; btn.textContent='Menyimpan...'; }
+
+  gasCall('saveKuitansi',[{
+    tanggal: d.tgl,
+    nama_donatur: d.nama,
+    nominal: d.nom,
+    nominal_terbilang: d.tb,
+    keterangan: d.ket,
+    rekening: d.rek,
+    dicatat_oleh: d.oleh
+  }], function(res) {
+    if(!res.ok){ toast('Gagal simpan: '+(res.msg||''), false); if(btn){btn.disabled=false;btn.textContent='✓ Konfirmasi & Generate Kuitansi';} return; }
+    toast('Kuitansi No. '+res.nomor+' berhasil disimpan!', true);
+    // Generate and download PDF
+    generateKuitansiPdf({
+      nomor: res.nomor,
+      tanggal: d.tgl,
+      tglFormatted: d.tglFormatted,
+      nama: d.nama,
+      nominal: d.nom,
+      terbilang: d.tb,
+      keterangan: d.ket,
+      rekening: d.rek,
+      oleh: d.oleh
+    });
+    // Reset form
+    setTimeout(function(){
+      document.getElementById('kuit_preview_area').innerHTML='';
+      var fields = ['kuit_rekening','kuit_tanggal','kuit_nama','kuit_nominal','kuit_keterangan'];
+      fields.forEach(function(id){ var e=document.getElementById(id); if(e) e.value=id==='kuit_tanggal'?new Date().toISOString().split('T')[0]:''; });
+      var tb=document.getElementById('kuit_terbilang_preview'); if(tb) tb.textContent='';
+    }, 1000);
+  }, function(m){ toast('Gagal: '+m, false); if(btn){btn.disabled=false;btn.textContent='✓ Konfirmasi & Generate Kuitansi';} });
+}
+
+function generateKuitansiPdf(d) {
+  // Generate HTML kuitansi then print/save as PDF
+  var nominalFmt = 'Rp ' + Number(d.nominal).toLocaleString('id-ID') + ',-';
+
+  var html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">'+
+    '<title>Kuitansi '+d.nomor+'</title>'+
+    '<style>'+
+    '@page{size:A5 landscape;margin:8mm}'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:"Times New Roman",serif;background:#fff;color:#000;font-size:12px}'+
+    '.kuitansi{border:2px solid #8B6914;border-radius:4px;padding:0;width:100%;min-height:190mm;position:relative;overflow:hidden}'+
+    '.top-bar{background:linear-gradient(135deg,#0a5c2e,#1a8a4a);height:8px}'+
+    '.bot-bar{background:linear-gradient(135deg,#0a5c2e,#1a8a4a);height:8px;position:absolute;bottom:0;left:0;right:0}'+
+    '.inner{padding:10px 16px 20px}'+
+    '.header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #c9981a;padding-bottom:8px;margin-bottom:10px}'+
+    '.logo-area{display:flex;align-items:center;gap:10px}'+
+    '.logo-circle{width:55px;height:55px;border:2px solid #0a5c2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#0a5c2e;text-align:center;line-height:1.2}'+
+    '.org-name{text-align:center;flex:1}'+
+    '.org-name h1{font-size:22px;font-weight:900;color:#0a5c2e;letter-spacing:2px}'+
+    '.org-name p{font-size:10px;color:#555}'+
+    '.kuit-title{text-align:center;flex:1}'+
+    '.kuit-title h2{font-size:20px;font-weight:900;color:#8B6914;letter-spacing:4px}'+
+    '.nomor-box{text-align:right;font-size:10px}'+
+    '.nomor-badge{border:1px solid #8B6914;padding:3px 10px;font-size:11px;font-weight:700;display:inline-block;margin-top:4px}'+
+    '.fields{margin:8px 0}'+
+    '.field-row{display:flex;align-items:baseline;margin-bottom:8px;border-bottom:1px dotted #ccc;padding-bottom:4px}'+
+    '.field-label{width:140px;font-size:11px;flex-shrink:0;color:#333}'+
+    '.field-colon{width:12px;text-align:center;flex-shrink:0}'+
+    '.field-value{flex:1;font-size:12px;font-weight:700;min-height:16px}'+
+    '.tgl-row{display:flex;justify-content:flex-end;font-size:11px;margin-bottom:6px}'+
+    '.bottom-area{display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px}'+
+    '.nominal-box{border:2px solid #0a5c2e;border-radius:6px;padding:6px 16px;background:#f0f9f0}'+
+    '.nominal-box .rp-label{font-size:10px;color:#555;font-weight:700}'+
+    '.nominal-box .rp-value{font-size:20px;font-weight:900;color:#0a5c2e}'+
+    '.ttd-area{text-align:center;min-width:140px}'+
+    '.ttd-name{font-size:11px;font-weight:700;margin-top:4px}'+
+    '.ttd-line{border-bottom:1px solid #000;width:120px;margin:0 auto;margin-top:2px}'+
+    '.donatur-area{text-align:center;min-width:120px}'+
+    '.keterangan-box{font-size:8.5px;color:#666;margin-top:8px;border-top:1px solid #eee;padding-top:4px;font-style:italic}'+
+    '.ornament{color:#c9981a;font-size:14px}'+
+    '</style></head><body>'+
+    '<div class="kuitansi">'+
+    '<div class="top-bar"></div>'+
+    '<div class="inner">'+
+
+    // HEADER
+    '<div class="header">'+
+    '<div class="logo-area">'+
+    '<div class="logo-circle">MASJID<br>AL-QOLAM<br>IQRO\'</div>'+
+    '</div>'+
+    '<div class="kuit-title">'+
+    '<span class="ornament">✦ </span><h2>KUITANSI</h2><span class="ornament"> ✦</span>'+
+    '<div style="font-size:10px;color:#0a5c2e;margin-top:2px">ALQOLAM &nbsp;|&nbsp; Masjid AlQOlam &nbsp;|&nbsp; Yayasan IQRO\' Bekasi</div>'+
+    '</div>'+
+    '<div class="nomor-box">'+
+    '<div>No.</div>'+
+    '<div class="nomor-badge">'+d.nomor+'</div>'+
+    '</div>'+
+    '</div>'+
+
+    // TANGGAL
+    '<div class="tgl-row">Tanggal : '+d.tglFormatted+'</div>'+
+
+    // FIELDS
+    '<div class="fields">'+
+    '<div class="field-row"><span class="field-label">Telah Terima Dari</span><span class="field-colon">:</span><span class="field-value">'+d.nama+'</span></div>'+
+    '<div class="field-row"><span class="field-label">Uang Sejumlah</span><span class="field-colon">:</span><span class="field-value" style="font-style:italic;text-transform:capitalize">'+d.terbilang+'</span></div>'+
+    '<div class="field-row"><span class="field-label">Untuk Pembayaran</span><span class="field-colon">:</span><span class="field-value">'+d.keterangan+'</span></div>'+
+    '</div>'+
+
+    // BOTTOM
+    '<div class="bottom-area">'+
+    '<div>'+
+    '<div class="nominal-box">'+
+    '<div class="rp-label">Rp.</div>'+
+    '<div class="rp-value">'+Number(d.nominal).toLocaleString('id-ID')+',-</div>'+
+    '</div>'+
+    '<div class="keterangan-box">Kuitansi ini diterbitkan otomatis oleh sistem dan sah tanpa tanda tangan.<br>Dokumen dinyatakan valid setelah tercatat di rekening lembaga.</div>'+
+    '</div>'+
+
+    '<div class="ttd-area">'+
+    '<div style="font-size:10px;color:#555;margin-bottom:24px">Penerima,</div>'+
+    '<div style="margin-bottom:6px;font-size:10px">Masjid Al Qolam</div>'+
+    '<div class="ttd-name">Joko Purwanto</div>'+
+    '<div class="ttd-line"></div>'+
+    '<div style="font-size:9px;color:#888;margin-top:2px">( Joko Purwanto )</div>'+
+    '</div>'+
+
+    '<div class="donatur-area">'+
+    '<div style="font-size:10px;color:#555;margin-bottom:24px">Yang Menyerahkan,</div>'+
+    '<div style="height:30px"></div>'+
+    '<div class="ttd-line"></div>'+
+    '<div style="font-size:9px;color:#555;margin-top:2px">( '+d.nama+' )</div>'+
+    '</div>'+
+    '</div>'+
+
+    '</div>'+
+    '<div class="bot-bar"></div>'+
+    '</div>'+
+    '</body></html>';
+
+  // Open in new window and trigger print
+  var win = window.open('','_blank','width=800,height=600');
+  win.document.write(html);
+  win.document.close();
+  win.onload = function() {
+    setTimeout(function(){
+      win.print();
+    }, 500);
+  };
+}
+
+
 // ================================================================
 //  HAPUS DATA (ADMIN)
 // ================================================================
@@ -2512,7 +2868,7 @@ function refreshPage() {
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
-    bendum:  [pgBendumImport,pgBendumLap,pgRuanganJadwal],
+    bendum:  [pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
   var fns = roleFnMap[role] || [];
