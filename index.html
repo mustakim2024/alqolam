@@ -589,7 +589,7 @@ function loadBadar(){
       if(d.status!=='LIBUR'){ for(var m=0;m<BADAR_SORE_IT.length;m++){ if(!d.sesi_sore||d.sesi_sore.indexOf(BADAR_SORE_IT[m])<0)sM2.push(m+1); } }
       var pT2=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':pl===BADAR_PAGI_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum No: '+pM2.join(', ')+'</span>';
       var sT2=d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':sl===BADAR_SORE_IT.length?'<span class="badge bg">LENGKAP</span>':'<span style="color:#c0392b;font-size:12px">Belum No: '+sM2.join(', ')+'</span>';
-      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+      rows+='<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td>'+
         '<td>'+pT2+'</td>'+'<td>'+sT2+'</td>'+
         '<td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
@@ -673,7 +673,7 @@ function loadKhandaq(){
     if(!data.length){ b.innerHTML='<tr><td colspan="5" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; }
     var rows=''; for(var i=0;i<data.length;i++){
       var d=data[i], cl=d.checklist?d.checklist.length:0;
-      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+      rows+='<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><span class="badge '+(d.status==='LIBUR'?'blibur':'bg')+'">'+d.status+'</span></td>'+
         '<td>'+(d.status==='LIBUR'?'<span class="badge blibur">LIBUR</span>':cl===KHANDAQ_IT.length?'<span class="badge bg">LENGKAP</span>':function(){ var mK=[]; for(var m=0;m<KHANDAQ_IT.length;m++){ if(!d.checklist||d.checklist.indexOf(KHANDAQ_IT[m])<0)mK.push(m+1); } return '<span style="color:#c0392b;font-size:12px">Belum No: '+mK.join(', ')+'</span>'; }())+'</td>'+
         '<td style="font-size:12px;color:#aaa">'+(d.catatan_sabtu_ahad||'-')+'</td></tr>';
@@ -757,7 +757,7 @@ function loadOjol(){
     if(!data.length){ b.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; }
     var rows=''; for(var i=0;i<data.length;i++){
       var d=data[i];
-      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+      rows+='<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><b>'+d.penerima+'</b> orang</td><td>'+rp(d.nominal_per_paket)+'</td>'+
         '<td>'+rp(d.biaya_lain)+'</td><td style="font-size:12px;color:#aaa">'+(d.ket_biaya_lain||'-')+'</td>'+
         '<td><b>'+rp(d.total)+'</b></td></tr>';
@@ -825,7 +825,7 @@ function pgBendumLap(el){
     '<option value="">Semua</option><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select></div>'+
     '</div></div>'+
     '<div style="overflow-x:auto"><table class="tbl"><thead><tr>'+
-    '<th>#</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Rekening</th><th>Keterangan</th><th>Jumlah</th><th>Saldo</th>'+
+    '<th>#</th><th class="sth" data-col="1" onclick="sortTable(\"kTb\",1,\"date\")">Tanggal</th><th class="sth" data-col="2" onclick="sortTable(\"kTb\",2,\"str\")">Jenis</th><th>Kategori</th><th>Rekening</th><th>Keterangan</th><th class="sth" data-col="6" onclick="sortTable(\"kTb\",6,\"num\")">Jumlah</th><th>Saldo</th>'+
     '</tr></thead><tbody id="kTb"><tr><td colspan="8">'+SK(2)+'</td></tr></tbody></table></div>';
   el.appendChild(card);
 
@@ -851,7 +851,7 @@ function loadKeu(){
     if(!data.length){ b.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#aaa">Belum ada data.</td></tr>'; return; }
     var rows=''; for(var i=0;i<data.length;i++){
       var d=data[i], isMsk=d.jenis==='pemasukan';
-      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+      rows+='<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td><span class="badge '+(isMsk?'bb':'br')+'">'+(isMsk?'Masuk':'Keluar')+'</span></td>'+
         '<td>'+d.kategori+'</td>'+
         '<td style="font-size:11px;color:#1a4a8a">'+(d.rekening||'-')+'</td>'+
@@ -861,6 +861,7 @@ function loadKeu(){
         '<td style="font-weight:700">'+rp(d.saldo)+'</td></tr>';
     }
     b.innerHTML=rows;
+    defaultSortDate('kTb',1);
   },function(m){ toast('Gagal: '+m,false); });
 }
 
@@ -1201,7 +1202,7 @@ function loadKeg2(role, getFn) {
     var rows='';
     for(var i=0;i<data.length;i++){
       var d=data[i];
-      rows+='<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+      rows+='<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+' WIB</td>'+
         '<td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td>'+
         '<td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td>'+
@@ -1483,7 +1484,11 @@ function renderJadwal(el, isAdmin) {
       '<div><label class="fl" style="margin-bottom:3px">Tahun</label></div>'+
       '</div></div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr>'+
-      '<th>#</th><th>Tanggal</th><th>Waktu</th><th>Lantai</th><th>Kegiatan / Pengirim</th><th>PJ / HP</th><th>Status</th>'+extraTh+
+      '<th>#</th>'+
+      '<th class="sth" data-col="1" onclick="sortTable(\"rng_tb\",1,\"date\")">Tanggal</th>'+
+      '<th>Waktu</th><th>Lantai</th>'+
+      '<th class="sth" data-col="4" onclick="sortTable(\"rng_tb\",4,\"str\")">Kegiatan / Pengirim</th>'+
+      '<th>PJ / HP</th><th>Status</th>'+extraTh+
       '</tr></thead><tbody id="rng_tb"><tr><td colspan="'+cols+'">'+SK(2)+'</td></tr></tbody></table></div>';
 
     var fbItems = card.querySelectorAll('.fbr > div');
@@ -1505,6 +1510,7 @@ function doLoadJadwal(isAdmin) {
     var rows='';
     for(var i=0;i<data.length;i++){
       var d=data[i];
+      d._dateVal=d.tanggal;
       var stTag=d.status==='CONFIRMED'?
         '<span class="tag-confirmed">CONFIRMED</span>':
         '<span class="tag-unconfirmed">UNCONFIRMED</span>';
@@ -1518,7 +1524,7 @@ function doLoadJadwal(isAdmin) {
       }
       rows+='<tr>'+
         '<td>'+(i+1)+'</td>'+
-        '<td><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
+        '<td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td>'+
         '<td style="white-space:nowrap">'+d.waktu_start+' - '+d.waktu_stop+' WIB</td>'+
         '<td><span class="badge bg">'+d.lantai+'</span></td>'+
         '<td>'+d.nama_kegiatan+'<br><small style="color:#aaa;font-size:11px">'+d.submitted_by+'</small></td>'+
@@ -1527,6 +1533,7 @@ function doLoadJadwal(isAdmin) {
         '</tr>';
     }
     b.innerHTML=rows;
+    defaultSortDate('rng_tb',1);
   },function(m){ toast('Gagal: '+m,false); });
 }
 
@@ -1861,7 +1868,7 @@ function renderMonitorTables(res) {
   if(jSec){var data=res.tabuk||[];
     jSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Laporan Jumat Berkah ('+data.length+' laporan)</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Menu</th><th>Porsi</th><th>Peserta</th><th>Anggaran</th><th>Catatan</th></tr></thead>'+
-      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.menu+'</td><td>'+d.porsi+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td><td style="font-size:12px;color:#aaa">'+(d.catatan||'-')+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
+      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.menu+'</td><td>'+d.porsi+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td><td style="font-size:12px;color:#aaa">'+(d.catatan||'-')+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
   }
 
   // Misno
@@ -1895,7 +1902,7 @@ function renderMonitorTables(res) {
     data.forEach(function(d){totOjol+=Number(d.total)||0;});
     oSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Distribusi Ojol ('+data.length+' distribusi — Total: '+rp(totOjol)+')</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Penerima</th><th>Nominal/Paket</th><th>Biaya Lain</th><th>Total</th></tr></thead>'+
-      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.penerima+'</td><td>'+rp(d.nominal_per_paket)+'</td><td>'+rp(d.biaya_lain)+'</td><td><b>'+rp(d.total)+'</b></td></tr>';}).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
+      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td><td>'+d.penerima+'</td><td>'+rp(d.nominal_per_paket)+'</td><td>'+rp(d.biaya_lain)+'</td><td><b>'+rp(d.total)+'</b></td></tr>';}).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
   }
 
   // Resq
@@ -1903,7 +1910,7 @@ function renderMonitorTables(res) {
   if(rSec){var data=res.resq||[];
     rSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Kegiatan Resq ('+data.length+' kegiatan)</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Waktu</th><th>Kegiatan</th><th>Tempat</th><th>Peserta</th><th>Anggaran</th></tr></thead>'+
-      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
+      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
   }
 
   // Dakwah
@@ -1922,7 +1929,7 @@ function renderMonitorTables(res) {
   if(sSec){var data=res.sarpras||[];
     sSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Kegiatan Sarpras ('+data.length+' kegiatan)</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Waktu</th><th>Kegiatan</th><th>Tempat</th><th>Peserta</th><th>Anggaran</th></tr></thead>'+
-      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
+      '<tbody>'+(data.length?data.map(function(d,i){return '<tr><td>'+(i+1)+'</td><td data-val="'+d.tanggal+'"><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+(d.waktu_start||'-')+' - '+(d.waktu_stop||'-')+'</td><td>'+d.nama_kegiatan+'</td><td>'+d.tempat+'</td><td>'+d.peserta+'</td><td>'+rp(d.anggaran)+'</td></tr>';}).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
   }
 
   // Ruangan
@@ -1935,6 +1942,31 @@ function renderMonitorTables(res) {
         return '<tr><td>'+(i+1)+'</td><td><span class="badge bg">'+fS(d.tanggal)+'</span></td><td style="white-space:nowrap">'+d.waktu_start+' - '+d.waktu_stop+' WIB</td><td><span class="badge bg">'+d.lantai+'</span></td><td>'+d.nama_kegiatan+'</td><td style="font-size:12px">'+d.submitted_by+'</td><td>'+stTag+'</td></tr>';
       }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+'</tbody></table></div></div>';
   }
+
+  // Auto sort all monitor sub-tables by date
+  setTimeout(function(){
+    ['mon_jumat','mon_misno','mon_wahyudin','mon_ojol','mon_resq','mon_dakwah','mon_sarpras'].forEach(function(secId){
+      var sec=document.getElementById(secId);
+      if(!sec) return;
+      var tbody=sec.querySelector('tbody');
+      if(!tbody) return;
+      var id='tbody_'+secId;
+      tbody.id=id;
+      var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+      if(rows.length<2) return;
+      rows.sort(function(a,b){
+        var aC=a.querySelectorAll('td')[1];
+        var bC=b.querySelectorAll('td')[1];
+        if(!aC||!bC) return 0;
+        return new Date(bC.getAttribute('data-val')||bC.textContent) - new Date(aC.getAttribute('data-val')||aC.textContent);
+      });
+      rows.forEach(function(r,i){
+        var f=r.querySelectorAll('td')[0];
+        if(f&&!isNaN(parseInt(f.textContent.trim()))) f.textContent=i+1;
+        tbody.appendChild(r);
+      });
+    });
+  },200);
 
   // Keuangan - per pekan/bulan/tahun
   var kSec=document.getElementById('mon_keuangan');
@@ -2823,6 +2855,64 @@ function generateKuitansiPdf(d) {
       win.print();
     }, 500);
   };
+}
+
+
+
+// ================================================================
+//  SORTABLE TABLE HELPER
+// ================================================================
+var _sortState = {};
+
+function sortTable(tbodyId, col, type) {
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  if (!rows.length) return;
+
+  var state = _sortState[tbodyId] || { col: -1, dir: 'asc' };
+  var dir = (state.col === col && state.dir === 'asc') ? 'desc' : 'asc';
+  _sortState[tbodyId] = { col: col, dir: dir };
+
+  rows.sort(function(a, b) {
+    var aC = a.querySelectorAll('td')[col];
+    var bC = b.querySelectorAll('td')[col];
+    if (!aC || !bC) return 0;
+    var aV = aC.getAttribute('data-val') || aC.textContent.trim();
+    var bV = bC.getAttribute('data-val') || bC.textContent.trim();
+    var result;
+    if (type === 'date') {
+      result = new Date(aV) - new Date(bV);
+    } else if (type === 'num') {
+      result = (parseFloat(String(aV).replace(/[^0-9.-]/g,''))||0) -
+               (parseFloat(String(bV).replace(/[^0-9.-]/g,''))||0);
+    } else {
+      result = String(aV).localeCompare(String(bV), 'id');
+    }
+    return dir === 'asc' ? result : -result;
+  });
+
+  rows.forEach(function(r, i) {
+    var first = r.querySelectorAll('td')[0];
+    if (first && !isNaN(parseInt(first.textContent.trim()))) first.textContent = i + 1;
+    tbody.appendChild(r);
+  });
+
+  var ths = tbody.parentElement ? tbody.parentElement.querySelectorAll('th.sortable') : [];
+  ths.forEach(function(th) {
+    th.textContent = th.textContent.replace(' ↑','').replace(' ↓','');
+    if (parseInt(th.getAttribute('data-col')) === col) {
+      th.textContent += dir === 'asc' ? ' ↑' : ' ↓';
+    }
+  });
+}
+
+// Default sort by date desc on load
+function defaultSortDate(tbodyId, col) {
+  _sortState[tbodyId] = { col: col, dir: 'desc' };
+  sortTable(tbodyId, col, 'date');
+  // flip to asc so next click goes asc
+  _sortState[tbodyId] = { col: col, dir: 'desc' };
 }
 
 
