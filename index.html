@@ -3023,6 +3023,8 @@ function generateKuitansiPdf(d) {
 }
 
 
+var _sortState = {};
+
 function sortTable(tbodyId, col, type) {
   var tbody = document.getElementById(tbodyId);
   if (!tbody) return;
