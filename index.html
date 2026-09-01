@@ -569,6 +569,27 @@ function draftBadar(){
 function pgBadarMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
+
+  // Checklist reference card
+  var refCard = document.createElement('div'); refCard.className='card'; refCard.style.marginTop='12px';
+  var refCh = document.createElement('div'); refCh.className='chead'; refCh.textContent='Referensi Checklist Misno';
+  var refCb = document.createElement('div'); refCb.className='cbody'; refCb.style.padding='10px 14px';
+  var grid = document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:12px';
+  var pagiItems = ['Menyapu dan mengepel area masjid','Membersihkan karpet','Membersihkan tempat wudhu dan toilet','Merapikan sandal','Mengecek sound system','Menyiapkan masjid untuk kegiatan pagi dan sholat dhuhur','Membersihkan Tempat Wudlu A','Membersihkan Tempat Wudlu B','Membersihkan Kamar Mandi Ikhwan','Membersihkan Kamar Mandi Akhwat'];
+  var soreItems = ['Menyapu dan mengepel area masjid','Membersihkan karpet','Membersihkan tempat wudhu dan toilet','Merapikan sandal','Mengecek sound system','Menyiapkan masjid untuk kegiatan sore, sholat Maghrib dan Isya'];
+  [[pagiItems,'#0a5c2e','Pagi (10 item) — 06:00–11:30'],[soreItems,'#1a4a8a','Sore (6 item) — 16:30–18:00']].forEach(function(grp) {
+    var col = document.createElement('div');
+    var lbl = document.createElement('div'); lbl.style.cssText='font-size:11px;font-weight:700;color:'+grp[1]+';margin-bottom:5px;border-bottom:1px solid #eee;padding-bottom:2px';
+    lbl.textContent = grp[2]; col.appendChild(lbl);
+    var ol = document.createElement('ol'); ol.style.cssText='margin:0;padding-left:18px';
+    grp[0].forEach(function(txt,i) {
+      var li = document.createElement('li'); li.style.cssText='font-size:11px;color:#333;margin-bottom:3px;line-height:1.5';
+      li.textContent = txt; ol.appendChild(li);
+    });
+    col.appendChild(ol); grid.appendChild(col);
+  });
+  refCb.appendChild(grid); refCard.appendChild(refCh); refCard.appendChild(refCb);
+  el.appendChild(refCard);
   el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Misno</h2><p>Riwayat laporan harian</p></div>'+
     '<div id="bdStat">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div class="chead">Tabel Riwayat<div class="fbr">'+
@@ -666,6 +687,19 @@ function draftKhandaq(){
 function pgKhandaqMon(el){
   var curY=new Date().getFullYear(), MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   var mOpts=''; for(var i=0;i<MN.length;i++) mOpts+='<option value="'+(i+1)+'">'+MN[i]+'</option>';
+
+  // Checklist reference card
+  var refCard = document.createElement('div'); refCard.className='card'; refCard.style.marginTop='12px';
+  var refCh = document.createElement('div'); refCh.className='chead'; refCh.textContent='Referensi Checklist Wahyudin (Lantai 2)';
+  var refCb = document.createElement('div'); refCb.className='cbody'; refCb.style.padding='10px 14px';
+  var items = ['Menyapu dan mengepel lantai 2','Bersihkan kamar mandi dan toilet','Bersih-bersih kaca','Cek AC dan kipas angin'];
+  var ol = document.createElement('ol'); ol.style.cssText='margin:0;padding-left:18px';
+  items.forEach(function(txt) {
+    var li = document.createElement('li'); li.style.cssText='font-size:11px;color:#333;margin-bottom:4px;line-height:1.5';
+    li.textContent = txt; ol.appendChild(li);
+  });
+  refCb.appendChild(ol); refCard.appendChild(refCh); refCard.appendChild(refCb);
+  el.appendChild(refCard);
   el.innerHTML='<div class="ph"><h2>Monitor Kebersihan - Wahyudin</h2><p>Riwayat laporan harian</p></div>'+
     '<div id="kdStat">'+SK(3)+'</div>'+
     '<div class="card" style="margin-top:14px"><div class="chead">Tabel Riwayat<div class="fbr">'+
@@ -1891,7 +1925,7 @@ function renderMonitorTables(res) {
   // Misno
   var mSec=document.getElementById('mon_misno');
   if(mSec){var data=sortByTanggalDesc(res.badar||[]);
-    mSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Misno ('+data.length+' hari)</div>'+
+    mSec.innerHTML='<div class="card" style="margin-top:10px">'+'<div class="chead">Referensi Checklist Misno</div>'+'<div class="cbody" style="padding:8px 14px">'+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+'<div><div style="font-size:11px;font-weight:700;color:#0a5c2e;margin-bottom:4px">Pagi (10 item) 06:00–11:30</div><ol style="margin:0;padding-left:16px"><li style="font-size:10.5px;color:#333;margin-bottom:2px">Menyapu dan mengepel area masjid</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan karpet</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan tempat wudhu dan toilet</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Merapikan sandal</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Mengecek sound system</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Menyiapkan masjid untuk kegiatan pagi dan sholat dhuhur</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan Tempat Wudlu A</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan Tempat Wudlu B</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan Kamar Mandi Ikhwan</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan Kamar Mandi Akhwat</li></ol></div>'+'<div><div style="font-size:11px;font-weight:700;color:#1a4a8a;margin-bottom:4px">Sore (6 item) 16:30–18:00</div><ol style="margin:0;padding-left:16px"><li style="font-size:10.5px;color:#333;margin-bottom:2px">Menyapu dan mengepel area masjid</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan karpet</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Membersihkan tempat wudhu dan toilet</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Merapikan sandal</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Mengecek sound system</li><li style="font-size:10.5px;color:#333;margin-bottom:2px">Menyiapkan masjid untuk kegiatan sore, sholat Maghrib dan Isya</li></ol></div>'+'</div></div></div>'+'<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Misno ('+data.length+' hari)</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Pagi</th><th>Sore</th><th>Catatan</th></tr></thead>'+
       '<tbody>'+(data.length?data.map(function(d,i){
         var pl=d.sesi_pagi?d.sesi_pagi.length:0,sl=d.sesi_sore?d.sesi_sore.length:0;
@@ -1904,7 +1938,7 @@ function renderMonitorTables(res) {
   // Wahyudin
   var wSec=document.getElementById('mon_wahyudin');
   if(wSec){var data=sortByTanggalDesc(res.khandaq||[]);
-    wSec.innerHTML='<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Wahyudin ('+data.length+' hari)</div>'+
+    wSec.innerHTML='<div class="card" style="margin-top:10px">'+'<div class="chead">Referensi Checklist Wahyudin (Lantai 2)</div>'+'<div class="cbody" style="padding:8px 14px">'+'<ol style="margin:0;padding-left:16px"><li style="font-size:10.5px;color:#333;margin-bottom:3px">Menyapu dan mengepel lantai 2</li><li style="font-size:10.5px;color:#333;margin-bottom:3px">Bersihkan kamar mandi dan toilet</li><li style="font-size:10.5px;color:#333;margin-bottom:3px">Bersih-bersih kaca</li><li style="font-size:10.5px;color:#333;margin-bottom:3px">Cek AC dan kipas angin</li></ol></div></div>'+'<div class="card" style="margin-top:12px"><div class="chead">Laporan Kebersihan - Wahyudin ('+data.length+' hari)</div>'+
       '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Tanggal</th><th>Status</th><th>Checklist</th><th>Catatan</th></tr></thead>'+
       '<tbody>'+(data.length?data.map(function(d,i){
         var cl=d.checklist?d.checklist.length:0;
