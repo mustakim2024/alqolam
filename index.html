@@ -219,7 +219,8 @@ var USERS_OFF = {
   le:      {pw:'cuan2026',       name:'LE',       role:'ruangan'},
   admin:   {pw:'monitor@2026',   name:'Admin',    role:'admin'},
   bendum:  {pw:'cairindonk@2026',name:'Bendum',   role:'bendum'},
-  staff:   {pw:'amanah2026',     name:'Staff',    role:'staff'}
+  staff:   {pw:'amanah2026',     name:'Staff',    role:'staff'},
+  ketua:   {pw:'gasspol2026',    name:'Ketua',    role:'ketua'}
 };
 
 var BADAR_PAGI_IT = ["Menyapu dan mengepel area masjid", "Membersihkan karpet", "Membersihkan tempat wudhu dan toilet", "Merapikan sandal", "Mengecek sound system", "Menyiapkan masjid untuk kegiatan pagi dan sholat dhuhur", "Membersihkan Tempat Wudlu A", "Membersihkan Tempat Wudlu B", "Membersihkan Kamar Mandi Ikhwan", "Membersihkan Kamar Mandi Akhwat"];
@@ -388,6 +389,7 @@ function renderApp(){
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
+  else if(r==='ketua'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Form Pesan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
@@ -3099,8 +3101,12 @@ function refreshPage() {
     ruangan: [pgRuanganSub,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
+    ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
+    ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
+    ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
+    ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
     bendum:  [pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
