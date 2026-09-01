@@ -390,7 +390,7 @@ function renderApp(){
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
   else if(r==='ketua'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Form Pesan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal]; }
-  else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
+  else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Kas Manual'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
   for(var i=0;i<tabs.length;i++){
@@ -3061,6 +3061,308 @@ function defaultSortDate(tbodyId, col) {
 }
 
 
+
+// ================================================================
+//  BENDUM - PENCATATAN MANUAL KAS FISIK
+// ================================================================
+
+function pgBendumKasManual(el) {
+  el.innerHTML = '';
+  el.appendChild(mkPh('Pencatatan Manual Kas','Catat pemasukan & pengeluaran kas fisik masjid'));
+
+  // Tab: Pengeluaran | Pemasukan | Rekap
+  var tabsDiv = document.createElement('div'); tabsDiv.className='jenis-tabs';
+  var tabs = [
+    {id:'km_keluar', label:'Pengeluaran'},
+    {id:'km_masuk',  label:'Pemasukan'},
+    {id:'km_rekap',  label:'Rekap'}
+  ];
+  var panels = {};
+  tabs.forEach(function(t,i) {
+    var tab = document.createElement('div');
+    tab.className = 'jenis-tab' + (i===0?' on':'');
+    tab.textContent = t.label;
+    tab.onclick = (function(tid, tEl) {
+      return function() {
+        tabsDiv.querySelectorAll('.jenis-tab').forEach(function(x){x.classList.remove('on');});
+        tEl.classList.add('on');
+        Object.keys(panels).forEach(function(k){ panels[k].style.display='none'; });
+        panels[tid].style.display='block';
+      };
+    })(t.id, tab);
+    tabsDiv.appendChild(tab);
+    var panel = document.createElement('div');
+    panel.id = t.id;
+    panel.style.display = i===0?'block':'none';
+    panels[t.id] = panel;
+  });
+  el.appendChild(tabsDiv);
+  Object.values(panels).forEach(function(p){ el.appendChild(p); });
+
+  // ---- PANEL PENGELUARAN ----
+  buildKeluar(panels['km_keluar']);
+
+  // ---- PANEL PEMASUKAN ----
+  buildMasuk(panels['km_masuk']);
+
+  // ---- PANEL REKAP ----
+  loadKasRekap(panels['km_rekap']);
+}
+
+function buildKeluar(el) {
+  el.innerHTML = '';
+  var card = document.createElement('div'); card.className='card'; card.style.marginTop='12px';
+  var ch = document.createElement('div'); ch.className='chead'; ch.textContent='Form Pengeluaran Kas';
+  var cb = document.createElement('div'); cb.className='cbody';
+
+  var info = document.createElement('div'); info.className='info-box';
+  info.innerHTML = 'Catat pengeluaran kas fisik masjid. Data tersimpan di sheet <b>kas_manual</b> terpisah dari rekening bank.';
+  cb.appendChild(info);
+
+  // Nominal
+  cb.appendChild(mkLabel('Besaran Pengeluaran (Rp)',true));
+  var nomInp = document.createElement('input');
+  nomInp.type='text'; nomInp.id='km_kel_nominal'; nomInp.placeholder='0';
+  nomInp.inputMode='numeric';
+  nomInp.style.cssText='width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-weight:600;margin-bottom:4px';
+  nomInp.oninput = function() {
+    var raw = this.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+    var num = parseInt(raw)||0;
+    this.value = num>0 ? num.toLocaleString('id-ID') : '';
+    this.setAttribute('data-num', num);
+  };
+  cb.appendChild(nomInp);
+
+  var terbWrap = document.createElement('div');
+  terbWrap.style.cssText = 'font-size:12px;color:#0a5c2e;font-style:italic;margin-bottom:12px';
+  nomInp.oninput = (function(orig, tw) {
+    return function() {
+      var raw = this.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+      var num = parseInt(raw)||0;
+      this.value = num>0 ? num.toLocaleString('id-ID') : '';
+      this.setAttribute('data-num', num);
+      tw.textContent = num>0 ? terbilang(num) : '';
+    };
+  })(nomInp.oninput, terbWrap);
+  cb.appendChild(terbWrap);
+
+  // Dari Rekening
+  cb.appendChild(mkLabel('Dari Rekening',true));
+  var rekSel = document.createElement('select');
+  rekSel.id = 'km_kel_rek';
+  rekSel.style.cssText='width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px';
+  rekSel.innerHTML = '<option value="">-- Pilih Rekening --</option>';
+  REKENING.forEach(function(r){ rekSel.innerHTML += '<option value="'+r+'">'+r+'</option>'; });
+  cb.appendChild(rekSel);
+
+  // Keterangan
+  cb.appendChild(mkLabel('Keterangan Pengeluaran',true));
+  var ketArea = document.createElement('textarea');
+  ketArea.id='km_kel_ket'; ketArea.placeholder='Contoh: Biaya listrik masjid bulan Agustus';
+  ketArea.rows=3;
+  ketArea.style.cssText='width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:16px;resize:vertical';
+  cb.appendChild(ketArea);
+
+  // Submit
+  var act = document.createElement('div'); act.className='act';
+  var btn = document.createElement('button'); btn.className='btnp';
+  btn.style.background='#c0392b';
+  btn.textContent='Simpan Pengeluaran';
+  btn.onclick = function() { submitKasManual('pengeluaran', el); };
+  act.appendChild(btn);
+  cb.appendChild(act);
+
+  card.appendChild(ch); card.appendChild(cb);
+  el.appendChild(card);
+
+  // Rekap pengeluaran
+  var rekapDiv = document.createElement('div'); rekapDiv.id='km_kel_rekap';
+  el.appendChild(rekapDiv);
+  loadKasSubRekap('pengeluaran', 'km_kel_rekap');
+}
+
+function buildMasuk(el) {
+  el.innerHTML = '';
+  var card = document.createElement('div'); card.className='card'; card.style.marginTop='12px';
+  var ch = document.createElement('div'); ch.className='chead'; ch.textContent='Form Pemasukan Kas';
+  var cb = document.createElement('div'); cb.className='cbody';
+
+  var info = document.createElement('div'); info.className='info-box';
+  info.innerHTML = 'Catat pemasukan kas fisik masjid (di luar transfer rekening bank).';
+  cb.appendChild(info);
+
+  // Nominal
+  cb.appendChild(mkLabel('Besaran Nominal (Rp)',true));
+  var nomInp = document.createElement('input');
+  nomInp.type='text'; nomInp.id='km_mas_nominal'; nomInp.placeholder='0';
+  nomInp.inputMode='numeric';
+  nomInp.style.cssText='width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-weight:600;margin-bottom:4px';
+  var terbWrap = document.createElement('div');
+  terbWrap.style.cssText='font-size:12px;color:#0a5c2e;font-style:italic;margin-bottom:12px';
+  nomInp.oninput = function() {
+    var raw = this.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+    var num = parseInt(raw)||0;
+    this.value = num>0 ? num.toLocaleString('id-ID') : '';
+    this.setAttribute('data-num', num);
+    terbWrap.textContent = num>0 ? terbilang(num) : '';
+  };
+  cb.appendChild(nomInp);
+  cb.appendChild(terbWrap);
+
+  // Sumber Pemasukan dropdown
+  cb.appendChild(mkLabel('Sumber Pemasukan',true));
+  var srcSel = document.createElement('select');
+  srcSel.id='km_mas_src';
+  srcSel.style.cssText='width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:12px';
+  ['-- Pilih Sumber --','Kotak Amal','Parkir','Infaq Cash','Lainnya'].forEach(function(o,i) {
+    var opt = document.createElement('option'); opt.value=i===0?'':o; opt.textContent=o;
+    srcSel.appendChild(opt);
+  });
+  cb.appendChild(srcSel);
+
+  // Keterangan Lain (muncul jika pilih Lainnya)
+  var lainWrap = document.createElement('div'); lainWrap.style.display='none'; lainWrap.style.marginBottom='12px';
+  lainWrap.appendChild(mkLabel('Keterangan Lainnya',true));
+  var lainInp = mkInput('km_mas_lain','text','Sebutkan sumber pemasukan...');
+  lainWrap.appendChild(lainInp);
+  cb.appendChild(lainWrap);
+  srcSel.onchange = function() {
+    lainWrap.style.display = this.value==='Lainnya' ? 'block' : 'none';
+  };
+
+  // Submit
+  var act = document.createElement('div'); act.className='act';
+  var btn = document.createElement('button'); btn.className='btnp';
+  btn.textContent='Simpan Pemasukan';
+  btn.onclick = function() { submitKasManual('pemasukan', el); };
+  act.appendChild(btn);
+  cb.appendChild(act);
+
+  card.appendChild(ch); card.appendChild(cb);
+  el.appendChild(card);
+
+  // Rekap pemasukan
+  var rekapDiv = document.createElement('div'); rekapDiv.id='km_mas_rekap';
+  el.appendChild(rekapDiv);
+  loadKasSubRekap('pemasukan', 'km_mas_rekap');
+}
+
+function submitKasManual(jenis, el) {
+  var oleh = CU ? CU.name : '';
+  var data = { jenis: jenis, dicatat_oleh: oleh };
+
+  if (jenis === 'pengeluaran') {
+    var nomEl = document.getElementById('km_kel_nominal');
+    var nom   = parseInt(nomEl ? nomEl.getAttribute('data-num') : '0')||0;
+    var rek   = document.getElementById('km_kel_rek');
+    var ket   = document.getElementById('km_kel_ket');
+    if (!nom)            { toast('Isi besaran pengeluaran!', false); return; }
+    if (!rek || !rek.value) { toast('Pilih rekening!', false); return; }
+    if (!ket || !ket.value.trim()) { toast('Isi keterangan pengeluaran!', false); return; }
+    data.nominal = nom;
+    data.rekening_atau_sumber = rek.value;
+    data.keterangan = ket.value.trim();
+    data.keterangan_lain = '';
+  } else {
+    var nomEl = document.getElementById('km_mas_nominal');
+    var nom   = parseInt(nomEl ? nomEl.getAttribute('data-num') : '0')||0;
+    var src   = document.getElementById('km_mas_src');
+    var lain  = document.getElementById('km_mas_lain');
+    if (!nom)              { toast('Isi besaran nominal!', false); return; }
+    if (!src || !src.value){ toast('Pilih sumber pemasukan!', false); return; }
+    if (src.value==='Lainnya' && (!lain||!lain.value.trim())) { toast('Isi keterangan lainnya!', false); return; }
+    data.nominal = nom;
+    data.rekening_atau_sumber = src.value;
+    data.keterangan = src.value;
+    data.keterangan_lain = src.value==='Lainnya' ? lain.value.trim() : '';
+  }
+
+  gasCall('saveKasManual',[data], function(res) {
+    if (!res.ok) { toast('Gagal: '+(res.msg||''), false); return; }
+    toast('Berhasil disimpan!', true);
+    // Reset form
+    if (jenis==='pengeluaran') {
+      var n=document.getElementById('km_kel_nominal'); if(n){n.value='';n.setAttribute('data-num',0);}
+      var r=document.getElementById('km_kel_rek'); if(r) r.value='';
+      var k=document.getElementById('km_kel_ket'); if(k) k.value='';
+      loadKasSubRekap('pengeluaran','km_kel_rekap');
+    } else {
+      var n=document.getElementById('km_mas_nominal'); if(n){n.value='';n.setAttribute('data-num',0);}
+      var s=document.getElementById('km_mas_src'); if(s) s.value='';
+      var l=document.getElementById('km_mas_lain'); if(l) l.value='';
+      var tw=el.querySelector('div[style*="font-style:italic"]'); if(tw) tw.textContent='';
+      loadKasSubRekap('pemasukan','km_mas_rekap');
+    }
+  }, function(m){ toast('Gagal: '+m, false); });
+}
+
+function loadKasSubRekap(jenis, divId) {
+  var div = document.getElementById(divId); if(!div) return;
+  div.innerHTML = SK(2);
+  gasCall('getKasManual',[{jenis:jenis}], function(res) {
+    var data = res.data||[];
+    if (!data.length) { div.innerHTML=''; return; }
+    var total = data.reduce(function(s,d){ return s+Number(d.nominal); }, 0);
+    var color = jenis==='pemasukan' ? '#1a4a8a' : '#c0392b';
+    var html = '<div class="card" style="margin-top:12px">'+
+      '<div class="chead">Riwayat '+( jenis==='pemasukan'?'Pemasukan':'Pengeluaran')+
+      ' Kas ('+data.length+' transaksi — Total: <span style="color:'+color+'">'+rp(total)+'</span>)</div>'+
+      '<div style="overflow-x:auto"><table class="tbl"><thead><tr>'+
+      '<th>#</th><th>Waktu</th><th>'+(jenis==='pemasukan'?'Sumber':'Rekening')+'</th>'+
+      '<th>Keterangan</th><th>Nominal</th></tr></thead><tbody>'+
+      data.map(function(d,i) {
+        var tgl = new Date(d.timestamp);
+        var waktu = tgl.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) +
+          ' ' + tgl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+        var ket = d.keterangan_lain ? d.keterangan+' ('+d.keterangan_lain+')' : d.keterangan;
+        return '<tr><td>'+(i+1)+'</td>'+
+          '<td style="font-size:11px;white-space:nowrap">'+waktu+'</td>'+
+          '<td style="font-size:11px">'+d.rekening_atau_sumber+'</td>'+
+          '<td style="font-size:12px">'+ket+'</td>'+
+          '<td style="font-weight:700;color:'+color+'">'+rp(d.nominal)+'</td></tr>';
+      }).join('')+
+      '</tbody></table></div></div>';
+    div.innerHTML = html;
+  }, function(m){ div.innerHTML='<p style="color:red">Gagal: '+m+'</p>'; });
+}
+
+function loadKasRekap(el) {
+  el.innerHTML = SK(2);
+  gasCall('getKasManual',[{}], function(res) {
+    var data = res.data||[];
+    var masuk=0, keluar=0;
+    data.forEach(function(d){
+      if(d.jenis==='pemasukan') masuk+=Number(d.nominal);
+      else keluar+=Number(d.nominal);
+    });
+    var saldo = masuk - keluar;
+    el.innerHTML =
+      '<div class="sg" style="margin-top:12px">'+
+      '<div class="sc"><div class="sl">Total Pemasukan Kas</div><div class="sv" style="color:#1a4a8a;font-size:14px">'+rp(masuk)+'</div></div>'+
+      '<div class="sc"><div class="sl">Total Pengeluaran Kas</div><div class="sv" style="color:#c0392b;font-size:14px">'+rp(keluar)+'</div></div>'+
+      '<div class="sc"><div class="sl">Saldo Kas</div><div class="sv" style="font-size:14px;color:'+(saldo>=0?'#0a5c2e':'#c0392b')+'">'+rp(saldo)+'</div></div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+      '<div class="chead">Semua Transaksi Kas Manual ('+data.length+')</div>'+
+      '<div style="overflow-x:auto"><table class="tbl"><thead><tr>'+
+      '<th>#</th><th>Waktu</th><th>Jenis</th><th>Sumber/Rekening</th><th>Keterangan</th><th>Nominal</th></tr></thead>'+
+      '<tbody>'+(data.length ? data.map(function(d,i){
+        var tgl=new Date(d.timestamp);
+        var waktu=tgl.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+
+          ' '+tgl.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+        var ket=d.keterangan_lain?d.keterangan+' ('+d.keterangan_lain+')':d.keterangan;
+        var isMsk=d.jenis==='pemasukan';
+        return '<tr><td>'+(i+1)+'</td>'+
+          '<td style="font-size:11px;white-space:nowrap">'+waktu+'</td>'+
+          '<td><span class="badge '+(isMsk?'bb':'br')+'">'+(isMsk?'Masuk':'Keluar')+'</span></td>'+
+          '<td style="font-size:11px">'+d.rekening_atau_sumber+'</td>'+
+          '<td style="font-size:12px">'+ket+'</td>'+
+          '<td style="font-weight:700;color:'+(isMsk?'#1a4a8a':'#c0392b')+'">'+rp(d.nominal)+'</td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada data</td></tr>')+
+      '</tbody></table></div></div>';
+  }, function(m){ el.innerHTML='<p style="color:red">Gagal load: '+m+'</p>'; });
+}
+
 // ================================================================
 //  HAPUS DATA (ADMIN)
 // ================================================================
@@ -3107,7 +3409,7 @@ function refreshPage() {
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
-    bendum:  [pgBendumPemasukan,pgBendumImport,pgBendumLap,pgRuanganJadwal],
+    bendum:  [pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
   var fns = roleFnMap[role] || [];
