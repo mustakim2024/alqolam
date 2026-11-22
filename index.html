@@ -404,6 +404,7 @@ function renderApp(){
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
   else if(r==='ketua'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Form Pesan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal]; }
+  else if(r==='kemuslimahan'||r==='sosial keumatan'||r==='peribadatan'){ tabs=[{l:'Jadwal Ruangan'}]; pages=[pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Kas Manual'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else { tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]; }
   var nav=document.getElementById('navEl'); nav.innerHTML='';
@@ -3459,6 +3460,9 @@ function refreshPage() {
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
+    'kemuslimahan':    [pgRuanganJadwal],
+    'sosial keumatan': [pgRuanganJadwal],
+    'peribadatan':     [pgRuanganJadwal],
     bendum:  [pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan]
   };
