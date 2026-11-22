@@ -166,6 +166,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 .pnote-i{color:#555;background:#f6f6f2}
 .prow-sb td{background:#fffafa}
 .pbtn{padding:6px 12px;font-size:12px;margin-top:6px}
+.prk-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:#eee;min-width:120px}
+.prk-bar span{display:block;height:100%}
+.prk-b-SUBMITTED{background:#6f8fc4}.prk-b-SENDBACK{background:#e0574a}.prk-b-APPROVED{background:#5fb27a}.prk-b-RELEASE{background:#0a5c2e}
+.prk-num{text-align:center;font-variant-numeric:tabular-nums}
+.prk-zero{color:#ccc}
+.prk-tot td{font-weight:800;background:#f6f6f2}
+.prk-pct{font-size:11px;color:#777;margin-top:4px}
 .pact{display:flex;flex-direction:column;gap:6px;margin-top:8px;align-items:stretch}
 .pact select,.pact textarea{font-size:12px;padding:6px 8px}
 .pedit{background:#fff8e6;border:1px solid #f0d58a;border-radius:8px;padding:10px 14px;font-size:13px;color:#7a5a00;margin-bottom:14px}
@@ -223,7 +230,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 <div class="toast" id="toastEl"></div>
 
 <script>
-var CU = null, PEND = null, CH = {};
+var CU = null, PEND = null, CH = {}, CUR_PAGES = null;
 // Running from GitHub Pages - using fetch() API
 
 // ---- STORAGE ----
@@ -282,7 +289,7 @@ function showMsg(txt,cls){ var el=document.getElementById('msgbox'); el.textCont
 function hideMsg(){ document.getElementById('msgbox').style.display='none'; }
 function toast(msg,ok){ var el=document.getElementById('toastEl'); el.textContent=(ok?'[OK] ':'[!] ')+msg; el.className='toast on '+(ok?'tok':'terr'); setTimeout(function(){ el.className='toast'; },3000); }
 function forceLogout(msg){
-  CU=null; PEND=null; PRG_EDIT=null;
+  CU=null; PEND=null; PRG_EDIT=null; CUR_PAGES=null;
   document.getElementById('loginWrap').style.display='flex';
   document.getElementById('appShell').style.display='none';
   document.getElementById('uIn').value=''; document.getElementById('pIn').value='';
@@ -376,13 +383,15 @@ function renderApp(){
   else if(r==='dakwah'){  tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgDakwahSub,pgDakwahMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
-  else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
+  else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal];
+    if(String(CU.username||'').toLowerCase()==='bph'){ tabs.splice(1,0,{l:'Status Program'}); pages.splice(1,0,pgProgramRekap); } }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
   else if(r==='ketua'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Form Pesan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='kemuslimahan'||r==='sosial keumatan'||r==='peribadatan'){ tabs=[{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Kas Manual'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
-  else if(r==='admin'){ tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'},{l:'Approval Program'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan,pgAdminProgram]; }
+  else if(r==='admin'){ tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'},{l:'Approval Program'},{l:'Status Program'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan,pgAdminProgram,pgProgramRekap]; }
   else { tabs=[{l:'Jadwal Ruangan'}]; pages=[pgRuanganJadwal]; } // peran tidak dikenal: hanya jadwal
+  CUR_PAGES=pages;
   var nav=document.getElementById('navEl'); nav.innerHTML='';
   for(var i=0;i<tabs.length;i++){
     (function(idx){
@@ -3442,7 +3451,7 @@ function refreshPage() {
     bendum:  [pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan,pgAdminProgram]
   };
-  var fns = roleFnMap[role] || [pgRuanganJadwal];
+  var fns = CUR_PAGES || roleFnMap[role] || [pgRuanganJadwal];
   if (fns[activeIdx]) {
     if(el) el.dataset.loaded = '1';
     fns[activeIdx](el);
@@ -3630,6 +3639,64 @@ function saveStsProgram(id,btn){
     for(var i=0;i<PRG_ALL.length;i++) if(PRG_ALL[i].id===id){ PRG_ALL[i].status=s; PRG_ALL[i].catatan_admin=c; PRG_ALL[i].diperbarui=new Date().toISOString(); PRG_ALL[i].diperbarui_oleh=CU.name; }
     renderAdminProgram();
   },function(m){ btn.disabled=false; btn.textContent='Simpan'; toast('Gagal: '+m,false); });
+}
+
+// ---- Admin & BPH: Status Program Keseluruhan (hanya lihat) ----
+var PRG_RK = [], PRG_KEYS = ['SUBMITTED','SENDBACK','APPROVED','RELEASE'];
+function pgProgramRekap(el){
+  var bOpts='<option value="">Semua bidang</option>'; Object.keys(PRG_LABEL).forEach(function(k){ bOpts+='<option value="'+esc(k)+'">'+esc(PRG_LABEL[k])+'</option>'; });
+  var sOpts='<option value="">Semua status</option>'; PRG_KEYS.forEach(function(k){ sOpts+='<option value="'+k+'">'+PRG_ST[k].t+'</option>'; });
+  el.innerHTML='<div class="ph"><h2>Status Program Keseluruhan</h2><p>Pantauan status rencana program kerja seluruh bidang</p></div>'+
+    prgLegend()+'<div id="prkStat">'+SK(1)+'</div>'+
+    '<div class="card"><div class="chead">Rekap per Bidang</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Bidang</th>'+
+    PRG_KEYS.map(function(k){ return '<th class="prk-num">'+prgBadge(k)+'</th>'; }).join('')+
+    '<th class="prk-num">Total</th><th>Progres</th><th>Total Anggaran</th><th>Anggaran Disetujui</th></tr></thead><tbody id="prkRekap"><tr><td colspan="9">'+SK(3)+'</td></tr></tbody></table></div></div>'+
+    '<div class="card"><div class="chead">Daftar Semua Program<div class="fbr">'+
+    '<div><label class="fl" style="margin-bottom:3px">Bidang</label><select id="prkFB" style="max-width:220px" onchange="renderProgramList()">'+bOpts+'</select></div>'+
+    '<div><label class="fl" style="margin-bottom:3px">Status</label><select id="prkFS" style="max-width:160px" onchange="renderProgramList()">'+sOpts+'</select></div>'+
+    '</div></div><div style="overflow-x:auto"><table class="tbl ptbl"><thead><tr><th>#</th><th>Bidang</th><th>Program / Kegiatan</th><th>Waktu</th><th>Penanggung Jawab</th><th>Anggaran</th><th class="pstc">Status</th></tr></thead><tbody id="prkList"><tr><td colspan="7">'+SK(3)+'</td></tr></tbody></table></div></div>';
+  gasCall('getProgramRekap',[],function(res){ PRG_RK=res.data||[]; renderProgramRekap(); renderProgramList(); },
+    function(m){ var b=document.getElementById('prkRekap'); if(b) b.innerHTML='<tr><td colspan="9" style="color:#c0392b;padding:20px">Gagal memuat: '+esc(m)+'</td></tr>'; var s=document.getElementById('prkStat'); if(s) s.innerHTML=''; });
+}
+function renderProgramRekap(){
+  var st=document.getElementById('prkStat'), b=document.getElementById('prkRekap'); if(!b) return;
+  var c={SUBMITTED:0,SENDBACK:0,APPROVED:0,RELEASE:0}, tot=0, ok=0;
+  PRG_RK.forEach(function(d){ c[d.status]=(c[d.status]||0)+1; tot+=Number(d.anggaran)||0; if(d.status==='APPROVED'||d.status==='RELEASE') ok+=Number(d.anggaran)||0; });
+  st.innerHTML='<div class="pstat"><div class="pstatc"><span class="pstl">Total program</span><b>'+PRG_RK.length+'</b></div>'+
+    PRG_KEYS.map(function(k){ return '<div class="pstatc">'+prgBadge(k)+'<b>'+c[k]+'</b></div>'; }).join('')+
+    '<div class="pstatc"><span class="pstl">Total anggaran diajukan</span><b>'+rp(tot)+'</b></div>'+
+    '<div class="pstatc"><span class="pstl">Anggaran disetujui (Approved + Release)</span><b>'+rp(ok)+'</b></div></div>';
+  var keys=Object.keys(PRG_LABEL); PRG_RK.forEach(function(d){ if(keys.indexOf(d.bidang)<0) keys.push(d.bidang); });
+  var html='', T={n:0,a:0,ok:0,SUBMITTED:0,SENDBACK:0,APPROVED:0,RELEASE:0};
+  keys.forEach(function(bd){
+    var r={n:0,a:0,ok:0,SUBMITTED:0,SENDBACK:0,APPROVED:0,RELEASE:0};
+    PRG_RK.forEach(function(d){ if(d.bidang!==bd) return; r.n++; r[d.status]=(r[d.status]||0)+1; r.a+=Number(d.anggaran)||0; if(d.status==='APPROVED'||d.status==='RELEASE') r.ok+=Number(d.anggaran)||0; });
+    Object.keys(T).forEach(function(k){ T[k]+=r[k]; });
+    html+=prkRow(esc(PRG_LABEL[bd]||bd),r,false);
+  });
+  html+=prkRow('Total',T,true);
+  b.innerHTML=html;
+}
+function prkRow(label,r,isTot){
+  var bar=r.n?PRG_KEYS.map(function(k){ return r[k]?'<span class="prk-b-'+k+'" style="width:'+(r[k]/r.n*100)+'%" title="'+PRG_ST[k].t+': '+r[k]+'"></span>':''; }).join(''):'';
+  var pct=r.n?Math.round(r.RELEASE/r.n*100):0;
+  return '<tr'+(isTot?' class="prk-tot"':'')+'><td>'+label+'</td>'+
+    PRG_KEYS.map(function(k){ return '<td class="prk-num'+(r[k]?'':' prk-zero')+'">'+r[k]+'</td>'; }).join('')+
+    '<td class="prk-num">'+r.n+'</td><td><div class="prk-bar">'+bar+'</div><div class="prk-pct">'+(r.n?pct+'% sudah Release':'Belum ada program')+'</div></td>'+
+    '<td style="white-space:nowrap">'+rp(r.a)+'</td><td style="white-space:nowrap">'+rp(r.ok)+'</td></tr>';
+}
+function renderProgramList(){
+  var b=document.getElementById('prkList'); if(!b) return;
+  var fb=document.getElementById('prkFB').value, fs=document.getElementById('prkFS').value;
+  var ord=Object.keys(PRG_LABEL);
+  var data=PRG_RK.filter(function(d){ return (!fb||d.bidang===fb)&&(!fs||d.status===fs); }).slice().sort(function(x,y){
+    var a=ord.indexOf(x.bidang), c=ord.indexOf(y.bidang); if(a!==c) return (a<0?99:a)-(c<0?99:c);
+    return String(x.waktu).localeCompare(String(y.waktu)); });
+  if(!data.length){ b.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa">Belum ada rencana program untuk filter ini.</td></tr>'; return; }
+  b.innerHTML=data.map(function(d,i){
+    var stc=prgBadge(d.status)+(d.catatan_admin?'<div class="pnote'+(d.status==='SENDBACK'?'':' pnote-i')+'">'+esc(d.catatan_admin)+'</div>':'');
+    return '<tr><td>'+(i+1)+'</td><td>'+esc(PRG_LABEL[d.bidang]||d.bidang)+'</td><td><b>'+esc(d.nama_program)+'</b><div class="psub">'+esc(d.tujuan)+'</div></td><td>'+esc(fWaktu(d.waktu))+'</td><td>'+esc(d.pj)+'</td><td style="white-space:nowrap">'+rp(d.anggaran)+'</td><td class="pstc">'+stc+'</td></tr>';
+  }).join('');
 }
 </script>
 </body>
