@@ -3456,9 +3456,9 @@ function refreshPage() {
 var PRG_LABEL = { 'tabuk':'Jumat Berkah (Tabuk)', 'badar':'Kebersihan (Badar)', 'resq':'ResQ', 'dakwah':'Dakwah',
   'kemuslimahan':'Kemuslimahan', 'sosial keumatan':'Sosial Keumatan', 'peribadatan':'Peribadatan' };
 var PRG_ST = {
-  SUBMITTED: { t:'Submitted', d:'Sudah dikirim, menunggu pemeriksaan admin.' },
-  SENDBACK:  { t:'Sendback',  d:'Dikembalikan admin. Wajib direvisi oleh bidang.' },
-  APPROVED:  { t:'Approved',  d:'Disetujui admin, siap masuk ke pleno.' },
+  SUBMITTED: { t:'Submitted', d:'Sudah dikirim, menunggu pemeriksaan BPH.' },
+  SENDBACK:  { t:'Sendback',  d:'Dikembalikan BPH. Wajib direvisi oleh bidang.' },
+  APPROVED:  { t:'Approved',  d:'Disetujui BPH, siap masuk ke pleno.' },
   RELEASE:   { t:'Release',   d:'Disetujui di pleno.' }
 };
 var PRG_EDIT = null;
@@ -3501,7 +3501,7 @@ function pgProgramSub(el){
 function prgShowEditBar(){
   var b=document.getElementById('prgEditBar'); if(!b) return;
   b.innerHTML = PRG_EDIT ? '<div class="pedit">Sedang merevisi program <b>'+esc(PRG_EDIT.nama_program)+'</b>.'+
-    (PRG_EDIT.catatan_admin?'<br>Catatan admin: <i>'+esc(PRG_EDIT.catatan_admin)+'</i>':'')+
+    (PRG_EDIT.catatan_admin?'<br>Catatan BPH: <i>'+esc(PRG_EDIT.catatan_admin)+'</i>':'')+
     ' <button class="btno" style="margin-left:8px;padding:4px 10px" onclick="rstProgram()">Batal revisi</button></div>' : '';
 }
 function rstProgram(){
