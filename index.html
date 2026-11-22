@@ -142,7 +142,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
 .btn-confirm:hover{background:#0a5c2e;color:#fff}.btn-unconfirm:hover{background:#c9981a;color:#fff}
 @media(max-width:600px){.fg2,.clgrid{grid-template-columns:1fr}.appmain{padding:14px}.smg{grid-template-columns:1fr}.lbox{padding:32px 20px}}
 
+/* Nama user besar */
+.ubar{background:#fff;border-bottom:1px solid #e0e0e0;padding:14px 20px}
+.ugreet{font-size:12px;color:#777;font-weight:600}
+.unm{font-size:24px;font-weight:800;color:#0a5c2e;line-height:1.2;word-break:break-word}
 /* Rencana Program Kerja */
+.pdr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.psml{display:block;font-size:11px;color:#777;margin-bottom:4px}
 .pst{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
 .pst-SUBMITTED{background:#e8eef8;color:#1a4a8a}
 .pst-SENDBACK{background:#fdecea;color:#b42318}
@@ -195,10 +201,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#0a5c2e}
     </div>
     <div class="hright">
       <div class="huser"><div class="ava" id="avEl">A</div><span class="hnm" id="nmEl">User</span></div>
-      <button class="boutbtn" id="btnRefreshHdr" onclick="refreshPage()" title="Refresh halaman">&#8635;</button>
+      <button class="boutbtn" id="btnRefreshHdr" onclick="refreshPage()" title="Refresh halaman">Refresh</button>
       <button class="boutbtn boutbtn-red" id="btnLogout">Keluar</button>
     </div>
   </header>
+  <div class="ubar" id="uBar"></div>
   <nav class="nav" id="navEl"></nav>
   <div class="appmain" id="mainEl"></div>
 </div>
@@ -307,6 +314,7 @@ document.addEventListener('DOMContentLoaded', function(){
           var sh=document.getElementById('appShell'); sh.style.display='flex'; sh.style.flexDirection='column';
           document.getElementById('avEl').textContent=(CU.name||'U')[0].toUpperCase();
           document.getElementById('nmEl').textContent=CU.name;
+          document.getElementById('uBar').innerHTML='<div class="ugreet">Assalamu&#39;alaikum,</div><div class="unm">'+esc(CU.name)+'</div>';
           renderApp();
         } else { showMsg(res.msg||'Username atau password salah.','merr'); }
       },
@@ -360,18 +368,18 @@ document.addEventListener('DOMContentLoaded', function(){
 // ================================================================
 function renderApp(){
   var r=CU.role, tabs, pages;
-  if(r==='tabuk'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Jumat Berkah'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Jadwal Ruangan'}]; pages=[pgTabukSub,pgTabukMon,pgProgramSub,pgProgramMon,pgRuanganJadwal]; }
-  else if(r==='badar'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Jadwal Ruangan'}]; pages=[pgBadarSub,pgBadarMon,pgProgramSub,pgProgramMon,pgRuanganJadwal]; }
+  if(r==='tabuk'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Jumat Berkah'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgTabukSub,pgTabukMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
+  else if(r==='badar'){   tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgBadarSub,pgBadarMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='khandaq'){ tabs=[{l:'Submit Laporan'},{l:'Monitor Kebersihan'},{l:'Jadwal Ruangan'}]; pages=[pgKhandaqSub,pgKhandaqMon,pgRuanganJadwal]; }
   else if(r==='ojol'){    tabs=[{l:'Submit Laporan'},{l:'Monitor Ojol'},{l:'Jadwal Ruangan'}]; pages=[pgOjolSub,pgOjolMon,pgRuanganJadwal]; }
-  else if(r==='resq'){    tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Jadwal Ruangan'}]; pages=[pgResqSub,pgResqMon,pgProgramSub,pgProgramMon,pgRuanganJadwal]; }
-  else if(r==='dakwah'){  tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Jadwal Ruangan'}]; pages=[pgDakwahSub,pgDakwahMon,pgProgramSub,pgProgramMon,pgRuanganJadwal]; }
+  else if(r==='resq'){    tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgResqSub,pgResqMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
+  else if(r==='dakwah'){  tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgDakwahSub,pgDakwahMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='sarpras'){ tabs=[{l:'Submit Kegiatan'},{l:'Rekap Kegiatan'},{l:'Jadwal Ruangan'}]; pages=[pgSarprasSub,pgSarprasMon,pgRuanganJadwal]; }
   else if(r==='ruangan'){ tabs=[{l:'Form Pemesanan'},{l:'Status Pemesanan'}]; pages=[pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='monitor'){ tabs=[{l:'Dashboard Monitor'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgRuanganJadwal]; }
   else if(r==='staff'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganJadwal]; }
   else if(r==='ketua'){  tabs=[{l:'Dashboard Monitor'},{l:'Pemesanan Ruangan'},{l:'Form Pesan Ruangan'},{l:'Jadwal Ruangan'}]; pages=[pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal]; }
-  else if(r==='kemuslimahan'||r==='sosial keumatan'||r==='peribadatan'){ tabs=[{l:'Rencana Program'},{l:'Program Saya'},{l:'Jadwal Ruangan'}]; pages=[pgProgramSub,pgProgramMon,pgRuanganJadwal]; }
+  else if(r==='kemuslimahan'||r==='sosial keumatan'||r==='peribadatan'){ tabs=[{l:'Rencana Program'},{l:'Program Saya'},{l:'Pemesanan Tempat'},{l:'Jadwal Ruangan'}]; pages=[pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal]; }
   else if(r==='bendum'){  tabs=[{l:'Input Pemasukan'},{l:'Kas Manual'},{l:'Upload CSV BSI'},{l:'Laporan Keuangan'},{l:'Jadwal Ruangan'}]; pages=[pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal]; }
   else if(r==='admin'){ tabs=[{l:'Ringkasan'},{l:'Kelola Budget'},{l:'Jumat Berkah'},{l:'Misno'},{l:'Wahyudin'},{l:'Data Ojol'},{l:'Data Keuangan'},{l:'Pemesanan Ruangan'},{l:'Approval Program'}]; pages=[pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan,pgAdminProgram]; }
   else { tabs=[{l:'Jadwal Ruangan'}]; pages=[pgRuanganJadwal]; } // peran tidak dikenal: hanya jadwal
@@ -3412,12 +3420,12 @@ function refreshPage() {
   if (!el || !CU) return;
   var role = CU.role;
   var roleFnMap = {
-    tabuk:   [pgTabukSub,pgTabukMon,pgProgramSub,pgProgramMon,pgRuanganJadwal],
-    badar:   [pgBadarSub,pgBadarMon,pgProgramSub,pgProgramMon,pgRuanganJadwal],
+    tabuk:   [pgTabukSub,pgTabukMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
+    badar:   [pgBadarSub,pgBadarMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
     khandaq: [pgKhandaqSub,pgKhandaqMon,pgRuanganJadwal],
     ojol:    [pgOjolSub,pgOjolMon,pgRuanganJadwal],
-    resq:    [pgResqSub,pgResqMon,pgProgramSub,pgProgramMon,pgRuanganJadwal],
-    dakwah:  [pgDakwahSub,pgDakwahMon,pgProgramSub,pgProgramMon,pgRuanganJadwal],
+    resq:    [pgResqSub,pgResqMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
+    dakwah:  [pgDakwahSub,pgDakwahMon,pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
     sarpras: [pgSarprasSub,pgSarprasMon,pgRuanganJadwal],
     ruangan: [pgRuanganSub,pgRuanganJadwal],
     monitor: [pgMonitorDash,pgRuanganJadwal],
@@ -3428,9 +3436,9 @@ function refreshPage() {
     staff:   [pgMonitorDash,pgStaffRuangan,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
     ketua:   [pgMonitorDash,pgStaffRuangan,pgRuanganSub,pgRuanganJadwal],
-    'kemuslimahan':    [pgProgramSub,pgProgramMon,pgRuanganJadwal],
-    'sosial keumatan': [pgProgramSub,pgProgramMon,pgRuanganJadwal],
-    'peribadatan':     [pgProgramSub,pgProgramMon,pgRuanganJadwal],
+    'kemuslimahan':    [pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
+    'sosial keumatan': [pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
+    'peribadatan':     [pgProgramSub,pgProgramMon,pgRuanganSub,pgRuanganJadwal],
     bendum:  [pgBendumPemasukan,pgBendumKasManual,pgBendumImport,pgBendumLap,pgRuanganJadwal],
     admin:   [pgAdminSum,pgAdminBudget,pgAdminTabuk,pgAdminBadar,pgAdminKhandaq,pgAdminOjol,pgAdminKeu,pgAdminRuangan,pgAdminProgram]
   };
@@ -3454,6 +3462,10 @@ var PRG_ST = {
   RELEASE:   { t:'Release',   d:'Disetujui di pleno.' }
 };
 var PRG_EDIT = null;
+function fmtRibu(el){ var n=el.value.replace(/\D/g,'').replace(/^0+(?=\d)/,''); el.value=n?Number(n).toLocaleString('id-ID'):''; }
+function parseRibu(v){ var n=String(v||'').replace(/\D/g,''); return n===''?'':Number(n); }
+function fTglPrg(s){ var M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des']; var p=s.split('-'); return Number(p[2])+' '+M[Number(p[1])-1]+' '+p[0]; }
+function fWaktu(w){ var m=String(w||'').match(/^(\d{4}-\d{2}-\d{2})(?: s\.d\. (\d{4}-\d{2}-\d{2}))?$/); if(!m) return w; return fTglPrg(m[1])+(m[2]?' s.d. '+fTglPrg(m[2]):''); }
 function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function prgBadge(st){ var s=PRG_ST[st]?st:'SUBMITTED'; return '<span class="pst pst-'+s+'">'+PRG_ST[s].t+'</span>'; }
 function prgLegend(){
@@ -3475,10 +3487,12 @@ function pgProgramSub(el){
     '<div class="fg2">'+
     '<div style="grid-column:1/-1"><label class="fl">Nama Program / Kegiatan <span class="req">*</span></label><input type="text" id="prgNama" maxlength="150" placeholder="cth: Kajian Rutin Ahad Pagi"></div>'+
     '<div style="grid-column:1/-1"><label class="fl">Tujuan / Sasaran <span class="req">*</span></label><textarea id="prgTujuan" rows="2" maxlength="500" placeholder="Apa yang ingin dicapai dan siapa sasarannya"></textarea></div>'+
-    '<div><label class="fl">Waktu Pelaksanaan <span class="req">*</span></label><input type="text" id="prgWaktu" maxlength="100" placeholder="cth: Januari - Juni 2027, setiap Ahad"></div>'+
+    '<div style="grid-column:1/-1"><label class="fl">Waktu Pelaksanaan <span class="req">*</span></label><div class="pdr">'+
+      '<div><span class="psml">Tanggal mulai</span><input type="date" id="prgMulai"></div>'+
+      '<div><span class="psml">Tanggal selesai (kosongkan bila satu hari)</span><input type="date" id="prgSelesai"></div></div></div>'+
     '<div><label class="fl">Penanggung Jawab <span class="req">*</span></label><input type="text" id="prgPj" maxlength="100" placeholder="Nama penanggung jawab"></div>'+
-    '<div><label class="fl">Anggaran (Rp) <span class="req">*</span></label><div class="rpw"><span class="rppfx">Rp</span><input type="number" id="prgAnggaran" min="0" step="1000" placeholder="0"></div></div>'+
-    '<div><label class="fl">Indikator Keberhasilan <span class="req">*</span></label><input type="text" id="prgIndikator" maxlength="500" placeholder="cth: 40 jamaah hadir tiap pekan"></div>'+
+    '<div><label class="fl">Anggaran (Rp) <span class="req">*</span></label><div class="rpw"><span class="rppfx">Rp</span><input type="text" id="prgAnggaran" inputmode="numeric" placeholder="0" oninput="fmtRibu(this)"></div></div>'+
+    '<div style="grid-column:1/-1"><label class="fl">Indikator Keberhasilan <span class="req">*</span></label><input type="text" id="prgIndikator" maxlength="500" placeholder="cth: 40 jamaah hadir tiap pekan"></div>'+
     '<div style="grid-column:1/-1"><label class="fl">Keterangan</label><textarea id="prgKet" rows="2" maxlength="500" placeholder="Opsional"></textarea></div>'+
     '</div>'+
     '<div class="act"><button class="btno" onclick="rstProgram()">Reset</button><button class="btnp" onclick="draftProgram()">Lihat Draft</button></div></div></div>';
@@ -3492,14 +3506,16 @@ function prgShowEditBar(){
 }
 function rstProgram(){
   PRG_EDIT=null;
-  ['prgNama','prgTujuan','prgWaktu','prgPj','prgAnggaran','prgIndikator','prgKet'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  ['prgNama','prgTujuan','prgMulai','prgSelesai','prgPj','prgAnggaran','prgIndikator','prgKet'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
   prgShowEditBar();
 }
 function draftProgram(){
   var g=function(id){ return document.getElementById(id).value.trim(); };
-  var d={ nama_program:g('prgNama'), tujuan:g('prgTujuan'), waktu:g('prgWaktu'), pj:g('prgPj'), anggaran:g('prgAnggaran'), indikator:g('prgIndikator'), keterangan:g('prgKet') };
-  if(!d.nama_program||!d.tujuan||!d.waktu||!d.pj||d.anggaran===''||!d.indikator){ toast('Lengkapi semua kolom wajib!',false); return; }
-  var rows=[['Bidang',PRG_LABEL[CU.role]||CU.name],['Nama Program / Kegiatan',d.nama_program],['Tujuan / Sasaran',d.tujuan],['Waktu Pelaksanaan',d.waktu],['Penanggung Jawab',d.pj],['Anggaran',rp(d.anggaran)],['Indikator Keberhasilan',d.indikator],['Keterangan',d.keterangan||'-']];
+  var mulai=g('prgMulai'), selesai=g('prgSelesai'), angg=parseRibu(g('prgAnggaran'));
+  var d={ nama_program:g('prgNama'), tujuan:g('prgTujuan'), waktu:(mulai&&selesai&&selesai!==mulai)?mulai+' s.d. '+selesai:mulai, pj:g('prgPj'), anggaran:angg, indikator:g('prgIndikator'), keterangan:g('prgKet') };
+  if(!d.nama_program||!d.tujuan||!mulai||!d.pj||d.anggaran===''||!d.indikator){ toast('Lengkapi semua kolom wajib!',false); return; }
+  if(selesai&&selesai<mulai){ toast('Tanggal selesai tidak boleh sebelum tanggal mulai.',false); return; }
+  var rows=[['Bidang',PRG_LABEL[CU.role]||CU.name],['Nama Program / Kegiatan',d.nama_program],['Tujuan / Sasaran',d.tujuan],['Waktu Pelaksanaan',fWaktu(d.waktu)],['Penanggung Jawab',d.pj],['Anggaran',rp(d.anggaran)],['Indikator Keberhasilan',d.indikator],['Keterangan',d.keterangan||'-']];
   if(PRG_EDIT) rows.unshift(['Jenis','Revisi program (status kembali menjadi Submitted)']);
   var html=''; for(var i=0;i<rows.length;i++) html+='<tr><td>'+esc(rows[i][0])+'</td><td>'+esc(rows[i][1])+'</td></tr>';
   document.getElementById('draftT').innerHTML=html;
@@ -3532,7 +3548,7 @@ function loadProgramSaya(){
       var stCell=prgBadge(d.status);
       if(d.status==='SENDBACK') stCell+='<div class="pnote"><b>Perlu revisi:</b> '+esc(d.catatan_admin||'-')+'</div><button class="btnp pbtn" onclick="revisiProgram(\''+esc(d.id)+'\')">Revisi</button>';
       else if(d.catatan_admin) stCell+='<div class="pnote pnote-i">'+esc(d.catatan_admin)+'</div>';
-      rows+='<tr class="'+(d.status==='SENDBACK'?'prow-sb':'')+'"><td>'+(i+1)+'</td><td><b>'+esc(d.nama_program)+'</b><div class="psub">'+esc(d.tujuan)+'</div></td><td>'+esc(d.waktu)+'</td><td>'+esc(d.pj)+'</td><td style="white-space:nowrap">'+rp(d.anggaran)+'</td><td>'+esc(d.indikator)+'</td><td>'+esc(d.keterangan||'-')+'</td><td class="pstc">'+stCell+'</td></tr>';
+      rows+='<tr class="'+(d.status==='SENDBACK'?'prow-sb':'')+'"><td>'+(i+1)+'</td><td><b>'+esc(d.nama_program)+'</b><div class="psub">'+esc(d.tujuan)+'</div></td><td>'+esc(fWaktu(d.waktu))+'</td><td>'+esc(d.pj)+'</td><td style="white-space:nowrap">'+rp(d.anggaran)+'</td><td>'+esc(d.indikator)+'</td><td>'+esc(d.keterangan||'-')+'</td><td class="pstc">'+stCell+'</td></tr>';
     });
     b.innerHTML=rows;
   },function(m){ b.innerHTML='<tr><td colspan="8" style="color:#c0392b;padding:20px">Gagal memuat: '+esc(m)+'</td></tr>'; });
@@ -3544,7 +3560,8 @@ function revisiProgram(id){
   if(!document.getElementById('prgNama')) pgProgramSub(pg);
   PRG_EDIT=d;
   var set=function(id,v){ document.getElementById(id).value=v; };
-  set('prgNama',d.nama_program); set('prgTujuan',d.tujuan); set('prgWaktu',d.waktu); set('prgPj',d.pj); set('prgAnggaran',d.anggaran); set('prgIndikator',d.indikator); set('prgKet',d.keterangan||'');
+  var wm=String(d.waktu||'').match(/^(\d{4}-\d{2}-\d{2})(?: s\.d\. (\d{4}-\d{2}-\d{2}))?$/);
+  set('prgNama',d.nama_program); set('prgTujuan',d.tujuan); set('prgMulai',wm?wm[1]:''); set('prgSelesai',wm&&wm[2]?wm[2]:''); set('prgPj',d.pj); set('prgAnggaran',Number(d.anggaran||0).toLocaleString('id-ID')); set('prgIndikator',d.indikator); set('prgKet',d.keterangan||'');
   prgShowEditBar(); window.scrollTo(0,0);
 }
 function afterProgramSaved(){
@@ -3585,7 +3602,7 @@ function renderAdminProgram(){
       var id=esc(d.id), opts='';
       Object.keys(PRG_ST).forEach(function(k){ opts+='<option value="'+k+'"'+(d.status===k?' selected':'')+'>'+PRG_ST[k].t+'</option>'; });
       opts+='<option value="DELETE">Delete (hapus program)</option>';
-      html+='<tr><td>'+(i+1)+'</td><td><b>'+esc(d.nama_program)+'</b><div class="psub">'+esc(d.tujuan)+'</div><div class="psub">Diperbarui: '+esc(fS(d.diperbarui))+' oleh '+esc(d.diperbarui_oleh)+'</div></td><td>'+esc(d.waktu)+'</td><td>'+esc(d.pj)+'</td><td style="white-space:nowrap">'+rp(d.anggaran)+'</td><td>'+esc(d.indikator)+'</td><td>'+esc(d.keterangan||'-')+'</td>'+
+      html+='<tr><td>'+(i+1)+'</td><td><b>'+esc(d.nama_program)+'</b><div class="psub">'+esc(d.tujuan)+'</div><div class="psub">Diperbarui: '+esc(fS(d.diperbarui))+' oleh '+esc(d.diperbarui_oleh)+'</div></td><td>'+esc(fWaktu(d.waktu))+'</td><td>'+esc(d.pj)+'</td><td style="white-space:nowrap">'+rp(d.anggaran)+'</td><td>'+esc(d.indikator)+'</td><td>'+esc(d.keterangan||'-')+'</td>'+
         '<td class="pstc">'+prgBadge(d.status)+'<div class="pact"><select id="pS_'+id+'">'+opts+'</select>'+
         '<textarea id="pC_'+id+'" rows="2" maxlength="500" placeholder="Catatan (wajib jika Sendback)">'+esc(d.catatan_admin)+'</textarea>'+
         '<button class="btnp pbtn" onclick="saveStsProgram(\''+id+'\',this)">Simpan</button></div></td></tr>';
